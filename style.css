@@ -1,18 +1,42 @@
-/* style.css */
+/* --- IMPORTANDO FONTE MODERNA (Poppins) --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #f4f6f8;
-    margin: 0;
-    padding: 0;
-    color: #333;
+:root {
+    --primary-color: #E65100;
+    /* Laranja DBV */
+    --primary-light: #FF9800;
+    --secondary-color: #1565C0;
+    /* Azul */
+    --bg-color: #f4f7f6;
+    /* Fundo cinza claro */
+    --card-bg: #ffffff;
+    --text-color: #333;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    --radius: 12px;
 }
 
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding-bottom: 30px;
+}
+
+/* --- CABEÇALHO --- */
 header {
-    background: #E65100;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     color: white;
-    padding: 1rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(230, 81, 0, 0.3);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    margin-bottom: 25px;
 }
 
 .header-content {
@@ -24,223 +48,35 @@ header {
 }
 
 h1 {
-    margin: 0;
-    font-size: 1.2rem;
-}
-
-.container {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 0 15px;
-    padding-bottom: 50px;
-}
-
-/* Login */
-#tela-login {
-    text-align: center;
-    margin-top: 50px;
-}
-
-.btn-google {
-    background: white;
-    color: #444;
-    border: 1px solid #ddd;
-    padding: 15px 30px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Interface */
-#app-principal {
-    display: none;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* Navegação */
-nav {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    justify-content: center;
-}
-
-nav button {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    background: #e0e0e0;
-    cursor: pointer;
-    border-radius: 5px;
+    font-size: 1.4rem;
     font-weight: 600;
 }
 
-nav button.active {
-    background: #E65100;
-    color: white;
+small {
+    opacity: 0.9;
+    font-size: 0.85rem;
 }
 
-/* Cartões */
+/* --- CONTAINER PRINCIPAL --- */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* --- CARDS (CAIXAS BRANCAS) --- */
 .card {
-    background: white;
+    background: var(--card-bg);
+    border-radius: var(--radius);
     padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     margin-bottom: 20px;
-    animation: fadeIn 0.5s;
-}
-
-/* Formulários */
-input,
-select,
-textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-}
-
-.grid-notas {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-
-@media(min-width: 500px) {
-    .grid-notas {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-/* Botões */
-.btn {
-    width: 100%;
-    padding: 12px;
+    box-shadow: var(--shadow);
     border: none;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-    color: white;
-    margin-top: 10px;
+    /* Remove bordas antigas */
+    animation: slideIn 0.4s ease-out;
 }
 
-.btn-primary {
-    background: #E65100;
-}
-
-.btn-danger {
-    background: none;
-    color: #333;
-    /* Cor preta/cinza escuro para o texto */
-    border: none;
-    padding: 0;
-    font-weight: normal;
-    cursor: pointer;
-    display: inline-flex;
-    /* Garante que o emoji e o texto fiquem alinhados */
-    align-items: center;
-}
-
-/* Opcional: Adiciona um sublinhado ao passar o mouse para indicar que é clicável */
-.btn-danger:hover {
-    text-decoration: underline;
-}
-
-.btn-logout {
-    background: #333;
-    font-size: 0.8rem;
-    width: auto;
-    padding: 5px 15px;
-    margin-top: 0;
-}
-
-/* GRÁFICOS DE PIZZA (CSS PURO) */
-.chart-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 20px 0;
-}
-
-.pie-chart {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: conic-gradient(#ddd 0deg 360deg);
-    position: relative;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.pie-chart::after {
-    /* O buraco do Donut */
-    content: "";
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    background: white;
-    border-radius: 50%;
-    top: 40px;
-    left: 40px;
-}
-
-.legenda-grafico {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 15px;
-    font-size: 0.8rem;
-}
-
-.legenda-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.cor-bolinha {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-/* MODAL DE DETALHES */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    background: white;
-    width: 90%;
-    max-width: 500px;
-    padding: 20px;
-    border-radius: 10px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-}
-
-@keyframes fadeIn {
+@keyframes slideIn {
     from {
         opacity: 0;
         transform: translateY(10px);
@@ -252,83 +88,326 @@ textarea {
     }
 }
 
-/* --- ESTILOS DA TABELA DE REGRAS --- */
-
-.regras-box {
-    background-color: #fff3e0;
-    /* Fundo laranja bem clarinho */
-    border: 1px solid #ffe0b2;
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 20px;
-    animation: fadeIn 0.5s;
+/* --- MENU DE NAVEGAÇÃO --- */
+nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    /* Permite rolar no celular se for pequeno */
+    padding-bottom: 5px;
 }
 
-.regras-box h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: #E65100;
-    text-align: center;
-    border-bottom: 1px solid #ffcc80;
-    padding-bottom: 5px;
+nav button {
+    flex: 1;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+nav button.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 600;
+    transform: scale(1.05);
+}
+
+/* --- BOTÕES GERAIS --- */
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background: linear-gradient(to right, #E65100, #F57C00);
+    color: white;
+    box-shadow: 0 4px 10px rgba(230, 81, 0, 0.3);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    margin-top: 10px;
+}
+
+.btn-google {
+    background: white;
+    color: #444;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-logout {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    width: auto;
+    padding: 5px 15px;
+    font-size: 0.8rem;
+    backdrop-filter: blur(5px);
+}
+
+.btn-danger {
+    background: transparent;
+    color: #333;
+    border: none;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+/* --- FORMULÁRIOS E INPUTS --- */
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #fafafa;
+    transition: border 0.3s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.1);
+}
+
+/* --- GRID DE NOTAS (AVALIAÇÃO) --- */
+.grid-notas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 colunas no celular */
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+@media(min-width: 600px) {
+    .grid-notas {
+        grid-template-columns: repeat(4, 1fr);
+        /* 4 colunas no PC */
+    }
+}
+
+.grid-notas div {
+    background: #fff;
+    padding: 5px;
+}
+
+.grid-notas small {
+    display: block;
+    margin-bottom: 3px;
+    color: #666;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+/* --- TABELA DE REGRAS (Visual Clean) --- */
+.regras-box {
+    background: #fff8e1;
+    /* Amarelo bem clarinho */
+    border: 1px solid #ffe0b2;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
 }
 
 .regras-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    /* 2 colunas no celular */
+    grid-template-columns: 1fr;
     gap: 10px;
+    margin-top: 10px;
 }
 
-/* No computador, mostra 4 colunas */
 @media(min-width: 600px) {
     .regras-grid {
-        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 }
 
 .regra-item {
-    background: white;
+    background: rgba(255, 255, 255, 0.6);
     padding: 8px;
-    border-radius: 5px;
+    border-radius: 6px;
     font-size: 0.85rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .regra-item strong {
+    color: var(--primary-color);
     display: block;
-    color: #333;
-    margin-bottom: 3px;
-    font-size: 0.9rem;
-}
-
-.regra-item span {
-    color: #666;
 }
 
 .nota-rodape {
     text-align: center;
-    font-size: 0.9rem;
     margin-top: 15px;
-    margin-bottom: 0;
-    color: #E65100;
+    font-size: 0.9rem;
+    color: #666;
 }
 
-/* --- ESTILOS DO LOGIN (NOVO) --- */
-.login-card {
-    max-width: 400px;
-    margin: 50px auto;
-    text-align: center;
-}
-
-.form-login input {
-    width: 100%;
-    padding: 12px;
+/* --- PAINEL ADMIN (LOGS) 🕵️‍♂️ --- */
+.log-item {
+    background: white;
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    border-left: 4px solid #ccc;
     margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1rem;
-    background-color: #fafafa;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+.log-tipo-Login {
+    border-left-color: #4CAF50;
+}
+
+/* Verde */
+.log-tipo-Avaliação {
+    border-left-color: #2196F3;
+}
+
+/* Azul */
+.log-tipo-Exclusão {
+    border-left-color: #f44336;
+}
+
+/* Vermelho */
+.log-tipo-Configuração {
+    border-left-color: #FF9800;
+}
+
+/* Laranja */
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.log-texto {
+    font-size: 0.95rem;
+    color: #444;
+    line-height: 1.4;
+}
+
+.log-email {
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+/* --- GRÁFICOS --- */
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.pie-chart {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: #ddd;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.legenda-grafico {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.legenda-item {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #f9f9f9;
+    padding: 4px 8px;
+    border-radius: 15px;
+}
+
+.cor-bolinha {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* --- MODAL --- */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s;
+}
+
+/* --- UTILITÁRIOS --- */
+.hidden {
+    display: none !important;
 }
 
 .divisor {
@@ -337,39 +416,34 @@ textarea {
     margin: 20px 0;
     color: #999;
     font-size: 0.8rem;
-    font-weight: bold;
 }
 
 .divisor hr {
     flex: 1;
-    border: 0;
+    border: none;
     border-top: 1px solid #eee;
+    margin: 0 10px;
 }
 
-.divisor span {
-    padding: 0 10px;
+/* --- ESTILO DO LOGO NO CABEÇALHO (LIMPO) --- */
+.logo-header {
+    width: 80px;
+    /* Tamanho fixo */
+    height: auto;
+    /* Altura se ajusta para não distorcer */
+    object-fit: contain;
+    /* Mantém a proporção do brasão */
+    margin-right: 15px;
+    /* Afasta do texto */
+
+    /* Em vez de borda, vamos usar uma sombra suave direto na imagem */
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 
-.toggle-text {
-    font-size: 0.9rem;
-    margin-top: 15px;
-}
-
-.toggle-text a {
-    color: #E65100;
-    font-weight: bold;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.btn-secondary {
-    background-color: #444;
-    /* Cor escura para diferenciar */
-    color: white;
-}
-
-/* Ajuste no botão do Google para ficar alinhado */
-.btn-google {
-    width: 100%;
-    justify-content: center;
+/* Ajuste para o texto não ficar colado na imagem em telas pequenas */
+.header-content>div {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    /* Ocupa o espaço disponível */
 }

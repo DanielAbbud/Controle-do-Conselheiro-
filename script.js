@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, deleteDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import {
     getAuth,
     signInWithPopup,
@@ -34,6 +34,25 @@ let avaliacoesCache = [];
 // Configuração dos Gráficos
 const nomesCategorias = ["Freq.", "Devoção", "Unif.", "Hig.", "Boa Ação", "Ano Bíb.", "Taxa", "Disc."];
 const coresGrafico = ['#FF5722', '#FFC107', '#4CAF50', '#03A9F4', '#9C27B0', '#E91E63', '#795548', '#607D8B'];
+
+
+// --- FUNÇÃO ESPIÃ (LOGS) 🕵️‍♂️ ---
+async function registrarLog(acao, detalhes) {
+    if (!userAtual) return;
+    try {
+        await addDoc(collection(db, "logs"), {
+            usuario: userAtual.email || "Desconhecido",
+            uid: userAtual.uid,
+            acao: acao,
+            detalhes: detalhes,
+            data: new Date().toISOString(),
+            navegador: navigator.userAgent
+        });
+        console.log(`📝 Log registrado: ${acao}`);
+    } catch (e) {
+        console.error("Erro ao gravar log:", e);
+    }
+}
 
 
 // --- 1. LÓGICA DE LOGIN ---
@@ -77,7 +96,6 @@ document.getElementById('btn-entrar-email').addEventListener('click', () => {
     const email = document.getElementById('email-input').value;
     const senha = document.getElementById('senha-input').value;
     signInWithEmailAndPassword(auth, email, senha)
-        .then(() => console.log("Logado!"))
         .catch((error) => tratarErroLogin(error));
 });
 
@@ -105,30 +123,40 @@ function tratarErroLogin(error) {
 }
 
 // Logout
-document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+document.getElementById('btn-logout').addEventListener('click', () => {
+    registrarLog("Logout", "Usuário saiu do sistema");
+    signOut(auth);
+});
+
+// 👇 SEU UID DE ADMINISTRADOR
+const ADMIN_UID = "V7FUkGG035dQiBo5FoB3DVYF14N2";
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
+        if (userAtual === null) {
+            userAtual = user;
+            registrarLog("Login", "Entrou no sistema");
+        }
         userAtual = user;
         document.getElementById('tela-login').classList.add('hidden');
         document.getElementById('app-principal').style.display = 'block';
         document.getElementById('btn-logout').classList.remove('hidden');
+        document.getElementById('user-name').innerText = user.displayName || user.email;
 
-        let nomeExibicao = user.displayName || user.email;
-        document.getElementById('user-name').innerText = nomeExibicao;
+        // --- TRAVA DE SEGURANÇA 🔐 ---
+        const btnAdmin = document.getElementById('nav-admin');
+        if (user.uid === ADMIN_UID) {
+            btnAdmin.style.display = "inline-block";
+        } else {
+            btnAdmin.style.display = "none";
+        }
+
         carregarConfiguracao();
     } else {
         userAtual = null;
         document.getElementById('user-name').innerText = "";
         dadosUnidade = { unidade: "", membros: [] };
         avaliacoesCache = [];
-
-        document.getElementById('cfgUnidade').value = "";
-        document.getElementById('cfgMembros').value = "";
-        document.getElementById('lista-dashboard').innerHTML = "";
-        const grafico = document.getElementById('grafico-geral');
-        if (grafico) grafico.style.background = "#ddd";
-
         document.getElementById('tela-login').classList.remove('hidden');
         document.getElementById('app-principal').style.display = 'none';
         document.getElementById('btn-logout').classList.add('hidden');
@@ -139,10 +167,6 @@ onAuthStateChanged(auth, (user) => {
 // --- 2. CONFIGURAÇÃO ---
 async function carregarConfiguracao() {
     if (!userAtual) return;
-    document.getElementById('cfgUnidade').value = "";
-    document.getElementById('cfgMembros').value = "";
-    dadosUnidade = { unidade: "", membros: [] };
-
     const docSnap = await getDoc(doc(db, "configuracoes", userAtual.uid));
     if (docSnap.exists()) {
         dadosUnidade = docSnap.data();
@@ -155,6 +179,7 @@ document.getElementById('btn-salvar-config').addEventListener('click', async () 
     const unidade = document.getElementById('cfgUnidade').value;
     const membros = document.getElementById('cfgMembros').value.split('\n').filter(n => n.trim());
     await setDoc(doc(db, "configuracoes", userAtual.uid), { unidade, membros });
+    registrarLog("Configuração", `Alterou unidade/membros`);
     dadosUnidade = { unidade, membros };
     alert("✅ Salvo!");
     navegar('avaliar');
@@ -177,13 +202,12 @@ function carregarMembroWizard() {
     document.getElementById('n1').focus();
 }
 
-// BOTÃO PRÓXIMO (BLOQUEIA DUPLICADOS)
 document.getElementById('btn-proximo').addEventListener('click', async () => {
     if (!dadosUnidade.membros[wizardIndex]) return;
 
     const nomeMembro = dadosUnidade.membros[wizardIndex];
-    const mesSelecionado = document.getElementById('selMes').value;
-    const semanaSelecionada = document.getElementById('selSemana').value;
+    const mes = document.getElementById('selMes').value;
+    const semana = document.getElementById('selSemana').value;
 
     const notas = [];
     let total = 0;
@@ -193,37 +217,33 @@ document.getElementById('btn-proximo').addEventListener('click', async () => {
         total += val;
     }
 
-    const idUnico = `${userAtual.uid}_${nomeMembro.replace(/\s+/g, '')}_${mesSelecionado}_${semanaSelecionada}`;
+    const idUnico = `${userAtual.uid}_${nomeMembro.replace(/\s+/g, '')}_${mes}_${semana}`;
     const docRef = doc(db, "avaliacoes", idUnico);
 
     try {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            const pular = confirm(`⛔ ${nomeMembro} já tem nota em ${mesSelecionado}/${semanaSelecionada}.\n\nDeseja PULAR para o próximo?`);
+            const pular = confirm(`⛔ ${nomeMembro} já tem nota em ${mes}/${semana}.\nDeseja PULAR?`);
             if (pular) avancarProximoMembro();
             return;
         }
 
-        const novaAvaliacao = {
+        await setDoc(docRef, {
             uid: userAtual.uid,
             nome: nomeMembro,
-            mes: mesSelecionado,
-            semana: semanaSelecionada,
+            mes: mes,
+            semana: semana,
             notas: notas,
             total: total,
             data: new Date().toISOString()
-        };
+        });
 
-        await setDoc(docRef, novaAvaliacao);
-        console.log("Salvo!");
-
-        // Limpa o cache para que, se formos ao painel, ele baixe tudo novo (com a nova nota)
+        registrarLog("Avaliação", `Avaliou ${nomeMembro} (${total} pts)`);
         avaliacoesCache = [];
         avancarProximoMembro();
 
     } catch (error) {
-        console.error("Erro:", error);
-        alert("Erro no sistema: " + error.message);
+        alert("Erro: " + error.message);
     }
 });
 
@@ -239,165 +259,165 @@ function avancarProximoMembro() {
 }
 
 
-// --- 4. DASHBOARD E GRÁFICOS ---
+// --- 4. DASHBOARD ---
 window.atualizarDashboard = async function () {
     const divDash = document.getElementById('lista-dashboard');
     const cardDestaque = document.getElementById('card-destaque');
-
     divDash.innerHTML = "Carregando...";
     cardDestaque.style.display = 'none';
 
-    const filtroMes = document.getElementById('dashMes').value;
-    const filtroSemana = document.getElementById('dashSemana').value;
+    const mes = document.getElementById('dashMes').value;
+    const semana = document.getElementById('dashSemana').value;
 
     if (avaliacoesCache.length === 0) {
         const q = query(collection(db, "avaliacoes"), where("uid", "==", userAtual.uid));
         const snap = await getDocs(q);
-        // IMPORTANTE: Agora salvamos o ID do documento também
         snap.forEach(doc => {
-            let dados = doc.data();
-            dados.id = doc.id; // Guarda o ID para poder excluir depois
-            avaliacoesCache.push(dados);
+            let d = doc.data(); d.id = doc.id;
+            avaliacoesCache.push(d);
         });
     }
 
-    const dadosFiltrados = avaliacoesCache.filter(dado =>
-        dado.mes === filtroMes && dado.semana === filtroSemana
-    );
+    const filtrados = avaliacoesCache.filter(d => d.mes === mes && d.semana === semana);
 
-    if (dadosFiltrados.length === 0) {
-        divDash.innerHTML = "<p align='center'>Sem dados nesta semana.</p>";
+    if (filtrados.length === 0) {
+        divDash.innerHTML = "<p align='center'>Sem dados.</p>";
         document.getElementById('grafico-geral').style.background = '#eee';
-        document.getElementById('legenda-geral').innerHTML = "";
         return;
     }
 
     let html = "<ul style='padding:0; list-style:none;'>";
-    const totaisPorMembro = {};
-    const somaCategoriasGeral = [0, 0, 0, 0, 0, 0, 0, 0];
+    const totais = {};
+    const somaGeral = [0, 0, 0, 0, 0, 0, 0, 0];
 
-    dadosFiltrados.forEach(dado => {
-        if (!totaisPorMembro[dado.nome]) totaisPorMembro[dado.nome] = 0;
-        totaisPorMembro[dado.nome] += dado.total;
-        dado.notas.forEach((nota, i) => somaCategoriasGeral[i] += nota);
+    filtrados.forEach(d => {
+        if (!totais[d.nome]) totais[d.nome] = 0;
+        totais[d.nome] += d.total;
+        d.notas.forEach((n, i) => somaGeral[i] += n);
     });
 
-    const ranking = Object.entries(totaisPorMembro).sort((a, b) => b[1] - a[1]);
+    const ranking = Object.entries(totais).sort((a, b) => b[1] - a[1]);
 
     if (ranking.length > 0) {
-        const lider = ranking[0];
-        document.getElementById('nome-destaque').innerText = lider[0];
-        document.getElementById('pontos-destaque').innerText = lider[1];
+        document.getElementById('nome-destaque').innerText = ranking[0][0];
+        document.getElementById('pontos-destaque').innerText = ranking[0][1];
         cardDestaque.style.display = 'block';
     }
 
     ranking.forEach(([nome, total]) => {
-        html += `
-            <li onclick="abrirDetalhes('${nome}')" style="background:#f9f9f9; border-bottom: 1px solid #eee; margin:0; padding:15px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                <span>👤 ${nome}</span>
-                <span style="color:#555; font-weight:bold;">${total} pts &rarr;</span>
-            </li>`;
+        html += `<li onclick="abrirDetalhes('${nome}')" style="background:#f9f9f9; border-bottom:1px solid #eee; padding:15px; display:flex; justify-content:space-between; cursor:pointer;">
+            <span>👤 ${nome}</span><strong>${total} pts</strong>
+        </li>`;
     });
-    html += "</ul>";
-    divDash.innerHTML = html;
-
-    gerarGraficoPizza(somaCategoriasGeral, 'grafico-geral', 'legenda-geral');
+    divDash.innerHTML = html + "</ul>";
+    gerarGraficoPizza(somaGeral, 'grafico-geral', 'legenda-geral');
 }
 
-
-// --- 5. DETALHES (MODAL COM EXCLUIR) ---
+// --- 5. DETALHES ---
 window.abrirDetalhes = function (nome) {
     const modal = document.getElementById('modal-detalhes');
-    const listaHist = document.getElementById('lista-historico');
+    const lista = document.getElementById('lista-historico');
+    document.getElementById('titulo-detalhe').innerText = nome;
+    lista.innerHTML = "";
 
-    document.getElementById('titulo-detalhe').innerText = "Desempenho: " + nome;
-    listaHist.innerHTML = "";
+    const dados = avaliacoesCache.filter(d => d.nome === nome);
+    const soma = [0, 0, 0, 0, 0, 0, 0, 0];
 
-    const dadosMembro = avaliacoesCache.filter(d => d.nome === nome);
-    const somaCatMembro = [0, 0, 0, 0, 0, 0, 0, 0];
-
-    dadosMembro.forEach(d => {
-        // Gera o botão de excluir com o ID
-        listaHist.innerHTML += `
+    dados.forEach(d => {
+        lista.innerHTML += `
             <li style="border-bottom:1px solid #ddd; padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <span style="display:block; font-size:0.9rem; color:#666;">${d.mes} (${d.semana})</span>
-                    <strong style="font-size:1.1rem;">${d.total} pts</strong>
-                </div>
-                <button onclick="excluirAvaliacao('${d.id}', '${nome}')" class="btn-danger" style="width:auto; padding:5px 10px; font-size:0.8rem;">
-                    🗑️ Excluir
-                </button>
+                <span>${d.mes} (${d.semana}) <br> <b>${d.total} pts</b></span>
+                <button class="btn-danger" onclick="excluirAvaliacao('${d.id}', '${nome}')">🗑️ Excluir</button>
             </li>`;
-        d.notas.forEach((n, i) => somaCatMembro[i] += n);
+        d.notas.forEach((n, i) => soma[i] += n);
     });
-
     modal.classList.remove('hidden');
-
-    setTimeout(() => {
-        gerarGraficoPizza(somaCatMembro, 'grafico-individual');
-    }, 100);
+    setTimeout(() => gerarGraficoPizza(soma, 'grafico-individual'), 100);
 }
 
-// --- NOVA FUNÇÃO: EXCLUIR ---
 window.excluirAvaliacao = async function (id, nome) {
-    if (confirm("⚠️ Tem certeza que deseja excluir essa avaliação?\n\nDepois de excluir, você poderá avaliar este membro novamente nesta semana.")) {
-        try {
-            await deleteDoc(doc(db, "avaliacoes", id));
-
-            // Remove do cache local para atualizar a tela sem recarregar tudo
-            avaliacoesCache = avaliacoesCache.filter(item => item.id !== id);
-
-            alert("Avaliação excluída com sucesso!");
-
-            // Atualiza o modal (recarrega a lista) e o painel de fundo
-            abrirDetalhes(nome);
-            atualizarDashboard();
-
-        } catch (error) {
-            alert("Erro ao excluir: " + error.message);
-        }
+    if (confirm("Deseja excluir?")) {
+        await deleteDoc(doc(db, "avaliacoes", id));
+        registrarLog("Exclusão", `Excluiu nota de ${nome}`);
+        avaliacoesCache = avaliacoesCache.filter(i => i.id !== id);
+        alert("Excluído!");
+        abrirDetalhes(nome);
+        atualizarDashboard();
     }
 }
-
-window.fecharDetalhes = function () {
-    document.getElementById('modal-detalhes').classList.add('hidden');
-}
+window.fecharDetalhes = () => document.getElementById('modal-detalhes').classList.add('hidden');
 
 function gerarGraficoPizza(dados, idGrafico, idLegenda = null) {
     const total = dados.reduce((a, b) => a + b, 0);
     if (total === 0) return;
-    let gradiente = [];
-    let anguloAtual = 0;
-    let legendaHTML = "";
-
-    dados.forEach((valor, i) => {
-        if (valor > 0) {
-            const pct = valor / total;
-            const angulo = pct * 360;
-            gradiente.push(`${coresGrafico[i]} ${anguloAtual}deg ${anguloAtual + angulo}deg`);
-            anguloAtual += angulo;
-            if (idLegenda) {
-                legendaHTML += `<div class="legenda-item"><span class="cor-bolinha" style="background:${coresGrafico[i]}"></span>${nomesCategorias[i]} (${Math.round(pct * 100)}%)</div>`;
-            }
+    let grad = [], atual = 0, leg = "";
+    dados.forEach((v, i) => {
+        if (v > 0) {
+            const ang = (v / total) * 360;
+            grad.push(`${coresGrafico[i]} ${atual}deg ${atual + ang}deg`);
+            atual += ang;
+            if (idLegenda) leg += `<div class="legenda-item"><span class="cor-bolinha" style="background:${coresGrafico[i]}"></span>${nomesCategorias[i]}</div>`;
         }
     });
-    document.getElementById(idGrafico).style.background = `conic-gradient(${gradiente.join(', ')})`;
-    if (idLegenda) document.getElementById(idLegenda).innerHTML = legendaHTML;
+    document.getElementById(idGrafico).style.background = `conic-gradient(${grad.join(', ')})`;
+    if (idLegenda) document.getElementById(idLegenda).innerHTML = leg;
 }
 
+// --- 6. ADMIN (CARREGAR LOGS) ---
+window.carregarLogs = async function () {
+    const lista = document.getElementById('lista-logs');
+    lista.innerHTML = "Carregando...";
 
-// --- 6. NAVEGAÇÃO ---
-window.navegar = function (aba) {
-    ['config', 'avaliar', 'dashboard'].forEach(id => {
-        document.getElementById('sec-' + id).classList.add('hidden');
-        document.getElementById('nav-' + id).classList.remove('active');
+    // Busca os últimos 20 logs ordenados por data
+    const q = query(collection(db, "logs"), orderBy("data", "desc"), limit(20));
+    const snap = await getDocs(q);
+
+    lista.innerHTML = "";
+    snap.forEach(doc => {
+        const d = doc.data();
+        const dataFormatada = new Date(d.data).toLocaleString('pt-BR');
+
+        lista.innerHTML += `
+            <li class="log-item log-tipo-${d.acao.split(' ')[0]}">
+                <div class="log-header">
+                    <span>${dataFormatada}</span>
+                    <span class="log-email">${d.usuario}</span>
+                </div>
+                <div class="log-texto">
+                    ${d.acao}: ${d.detalhes}
+                </div>
+            </li>
+        `;
     });
-    document.getElementById('sec-' + aba).classList.remove('hidden');
-    document.getElementById('nav-' + aba).classList.add('active');
 
-    if (aba === 'dashboard') atualizarDashboard();
+    if (snap.empty) lista.innerHTML = "<p align='center'>Nenhum registro encontrado.</p>";
 }
 
+// --- 7. NAVEGAÇÃO CORRIGIDA ✅ ---
+window.navegar = function (aba) {
+    // Esconde todas as telas e desativa botões
+    ['config', 'avaliar', 'dashboard', 'admin'].forEach(id => {
+        const el = document.getElementById('sec-' + id);
+        if (el) el.classList.add('hidden');
+
+        const btn = document.getElementById('nav-' + id);
+        if (btn) btn.classList.remove('active');
+    });
+
+    // Mostra a tela certa
+    const telaDestino = document.getElementById('sec-' + aba);
+    if (telaDestino) telaDestino.classList.remove('hidden');
+
+    const btnDestino = document.getElementById('nav-' + aba);
+    if (btnDestino) btnDestino.classList.add('active');
+
+    // Executa ações específicas
+    if (aba === 'dashboard') atualizarDashboard();
+    if (aba === 'admin') carregarLogs();
+}
+
+// Eventos de clique
 document.getElementById('nav-config').onclick = () => navegar('config');
 document.getElementById('nav-avaliar').onclick = () => navegar('avaliar');
 document.getElementById('nav-dashboard').onclick = () => navegar('dashboard');
+document.getElementById('nav-admin').onclick = () => navegar('admin');

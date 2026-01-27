@@ -9,15 +9,18 @@
 </head>
 
 <body>
-
     <header>
         <div class="header-content">
-            <div>
-                <h1>Controle de Unidade</h1>
-                <small id="user-name"></small>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="logo.png" alt="Brasão Heróis da Fé" class="logo-header">
+                <div>
+                    <h1 style="margin: 0;">Controle de Unidade</h1>
+                    <small id="user-name" style="display: block;"></small>
+                </div>
             </div>
             <button id="btn-logout" class="btn btn-logout hidden">Sair</button>
         </div>
+    </header>
     </header>
 
     <div id="tela-login" class="container">
@@ -60,6 +63,7 @@
             <button id="nav-avaliar" class="active">📝 Avaliar</button>
             <button id="nav-dashboard">📊 Painel</button>
             <button id="nav-config">⚙️ Config</button>
+            <button id="nav-admin" style="display:none">👮 Admin</button>
         </nav>
 
         <div id="sec-config" class="card hidden">
@@ -69,6 +73,22 @@
             <label>Membros (um por linha):</label>
             <textarea id="cfgMembros" rows="5" placeholder="João&#10;Maria"></textarea>
             <button id="btn-salvar-config" class="btn btn-primary">💾 Salvar na Nuvem</button>
+        </div>
+        <div id="sec-admin" class="card hidden">
+            <h3 style="text-align:center; color:#333;">🕵️ Histórico de Atividades</h3>
+            <p style="text-align:center; font-size:0.9rem; color:#666; margin-bottom: 20px;">
+                Monitoramento de segurança da Unidade
+            </p>
+
+            <div style="text-align:center; margin-bottom:20px;">
+                <button onclick="carregarLogs()" class="btn btn-primary" style="width:auto; padding: 10px 30px;">
+                    🔄 Atualizar Lista
+                </button>
+            </div>
+
+            <ul id="lista-logs" style="padding:0; list-style:none;">
+                <li style="text-align:center; color:#999;">Aguardando atualização...</li>
+            </ul>
         </div>
 
         <div id="sec-avaliar" class="card">
@@ -104,42 +124,42 @@
 
                     <div class="regra-item">
                         <strong>01. Frequência</strong>
-                        <span>Presença: 30 | Ausência: 15</span>
+                        <span>Presente: 30 | Atrasado: 15 | Falta: 0</span>
                     </div>
 
                     <div class="regra-item">
-                        <strong>02. Devoção</strong>
-                        <span>Completo: 40 | Incompleto: 20</span>
+                        <strong>02. Devoção Matinal</strong>
+                        <span>Completo: 40 | Incompleto: 20 | Não fez: 0</span>
                     </div>
 
                     <div class="regra-item">
                         <strong>03. Uniforme</strong>
-                        <span>Completo: 50 | Incompleto: 20</span>
+                        <span>Completo: 50 | Incompleto: 20 | Sem: 0</span>
                     </div>
 
                     <div class="regra-item">
                         <strong>04. Higiene</strong>
-                        <span>Alinhado: 30 | Desalinhado: 15</span>
+                        <span>Alinhado: 30 | Desalinhado: 15 </span>
                     </div>
 
                     <div class="regra-item">
                         <strong>05. Classe Bíblica</strong>
-                        <span>Presença: 50 | Ausência: 25</span>
+                        <span>Presente: 50 | Atrasado: 25 | Falta: 0</span>
                     </div>
 
                     <div class="regra-item">
                         <strong>06. Ano Bíblico</strong>
-                        <span>Em Dias: 40 | Atraso: 30</span>
+                        <span>Em Dia: 40 | Atrasado: 20 | Não leu: 0</span>
                     </div>
 
                     <div class="regra-item">
                         <strong>07. Materiais</strong>
-                        <span>Completo: 40 | Incompleto: 20</span>
+                        <span>Completo: 40 | Falta Item: 20 | Sem: 0</span>
                     </div>
 
                     <div class="regra-item">
                         <strong>08. Disciplina</strong>
-                        <span>Disciplinado: 40 | Indisciplinado: 25</span>
+                        <span>Exemplar: 40 | Indisciplina: 0</span>
                     </div>
 
                 </div>
@@ -150,18 +170,19 @@
                 style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
                 <h2 id="wiz-nome" style="color: #E65100; text-align: center;">Nome do Membro</h2>
                 <div class="grid-notas">
-                    <div><small>01 Frequencia</small><input type="number" id="n1"></div>
-                    <div><small>02 Devoção</small><input type="number" id="n2"></div>
-                    <div><small>03 Uniforme</small><input type="number" id="n3"></div>
-                    <div><small>04 Higiene</small><input type="number" id="n4"></div>
-                    <div><small>05 Boa Ação</small><input type="number" id="n5"></div>
-                    <div><small>06 Ano Bíblico</small><input type="number" id="n6"></div>
-                    <div><small>07 Materiais</small><input type="number" id="n7"></div>
-                    <div><small>08 Disciplina</small><input type="number" id="n8"></div>
+                    <div><small>01 Frequencia</small><input type="number" id="n1" placeholder="Max 30"></div>
+                    <div><small>02 Devoção Matinal</small><input type="number" id="n2" placeholder="Max 40"></div>
+                    <div><small>03 Uniforme</small><input type="number" id="n3" placeholder="Max 50"></div>
+                    <div><small>04 Higiene</small><input type="number" id="n4" placeholder="Max 30"></div>
+                    <div><small>05 Classe Bíblica</small><input type="number" id="n5" placeholder="Max 50"></div>
+                    <div><small>06 Ano Bíblico</small><input type="number" id="n6" placeholder="Max 40"></div>
+                    <div><small>07 Materiais</small><input type="number" id="n7" placeholder="Max 40"></div>
+                    <div><small>08 Disciplina</small><input type="number" id="n8" placeholder="Max 40"></div>
                 </div>
                 <button id="btn-proximo" class="btn btn-primary">Salvar e Próximo ➡️</button>
             </div>
         </div>
+
         <div id="sec-dashboard" class="hidden">
 
             <div class="card" style="text-align: center; background: #fff3e0; border: 1px solid #ffe0b2;">
