@@ -1,0 +1,375 @@
+/* style.css */
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+header {
+    background: #E65100;
+    color: white;
+    padding: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.header-content {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 15px;
+    padding-bottom: 50px;
+}
+
+/* Login */
+#tela-login {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.btn-google {
+    background: white;
+    color: #444;
+    border: 1px solid #ddd;
+    padding: 15px 30px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Interface */
+#app-principal {
+    display: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Navegação */
+nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+nav button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: #e0e0e0;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+nav button.active {
+    background: #E65100;
+    color: white;
+}
+
+/* Cartões */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s;
+}
+
+/* Formulários */
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.grid-notas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+@media(min-width: 500px) {
+    .grid-notas {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Botões */
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    margin-top: 10px;
+}
+
+.btn-primary {
+    background: #E65100;
+}
+
+.btn-danger {
+    background: none;
+    color: #333;
+    /* Cor preta/cinza escuro para o texto */
+    border: none;
+    padding: 0;
+    font-weight: normal;
+    cursor: pointer;
+    display: inline-flex;
+    /* Garante que o emoji e o texto fiquem alinhados */
+    align-items: center;
+}
+
+/* Opcional: Adiciona um sublinhado ao passar o mouse para indicar que é clicável */
+.btn-danger:hover {
+    text-decoration: underline;
+}
+
+.btn-logout {
+    background: #333;
+    font-size: 0.8rem;
+    width: auto;
+    padding: 5px 15px;
+    margin-top: 0;
+}
+
+/* GRÁFICOS DE PIZZA (CSS PURO) */
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.pie-chart {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: conic-gradient(#ddd 0deg 360deg);
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pie-chart::after {
+    /* O buraco do Donut */
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: 50%;
+    top: 40px;
+    left: 40px;
+}
+
+.legenda-grafico {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    font-size: 0.8rem;
+}
+
+.legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cor-bolinha {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* MODAL DE DETALHES */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    padding: 20px;
+    border-radius: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- ESTILOS DA TABELA DE REGRAS --- */
+
+.regras-box {
+    background-color: #fff3e0;
+    /* Fundo laranja bem clarinho */
+    border: 1px solid #ffe0b2;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    animation: fadeIn 0.5s;
+}
+
+.regras-box h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #E65100;
+    text-align: center;
+    border-bottom: 1px solid #ffcc80;
+    padding-bottom: 5px;
+}
+
+.regras-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* 2 colunas no celular */
+    gap: 10px;
+}
+
+/* No computador, mostra 4 colunas */
+@media(min-width: 600px) {
+    .regras-grid {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}
+
+.regra-item {
+    background: white;
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.regra-item strong {
+    display: block;
+    color: #333;
+    margin-bottom: 3px;
+    font-size: 0.9rem;
+}
+
+.regra-item span {
+    color: #666;
+}
+
+.nota-rodape {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    margin-bottom: 0;
+    color: #E65100;
+}
+
+/* --- ESTILOS DO LOGIN (NOVO) --- */
+.login-card {
+    max-width: 400px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.form-login input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: #fafafa;
+}
+
+.divisor {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #999;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.divisor hr {
+    flex: 1;
+    border: 0;
+    border-top: 1px solid #eee;
+}
+
+.divisor span {
+    padding: 0 10px;
+}
+
+.toggle-text {
+    font-size: 0.9rem;
+    margin-top: 15px;
+}
+
+.toggle-text a {
+    color: #E65100;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background-color: #444;
+    /* Cor escura para diferenciar */
+    color: white;
+}
+
+/* Ajuste no botão do Google para ficar alinhado */
+.btn-google {
+    width: 100%;
+    justify-content: center;
+}

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Unidade DBV (Nuvem)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-content">
+            <div>
+                <h1>Controle de Unidade</h1>
+                <small id="user-name"></small>
+            </div>
+            <button id="btn-logout" class="btn btn-logout hidden">Sair</button>
+        </div>
+    </header>
+
+    <div id="tela-login" class="container">
+        <div class="card login-card">
+            <h2 id="titulo-login">Bem-vindo!</h2>
+            <p style="color: #666; margin-bottom: 20px;">Entre com seu email ou Google.</p>
+
+            <div class="form-login">
+                <input type="email" id="email-input" placeholder="📧 Seu email">
+                <input type="password" id="senha-input" placeholder="🔒 Sua senha">
+
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <a href="#" id="btn-esqueci-senha"
+                        style="font-size: 0.85rem; color: #E65100; text-decoration: none;">Esqueci minha senha</a>
+                </div>
+
+                <button id="btn-entrar-email" class="btn btn-primary">Entrar</button>
+                <button id="btn-criar-conta" class="btn btn-secondary hidden">Cadastrar Conta</button>
+            </div>
+
+            <p class="toggle-text">
+                <span id="txt-toggle">Não tem conta?</span>
+                <a href="#" id="link-toggle">Crie uma aqui</a>
+            </p>
+
+            <div class="divisor">
+                <hr> <span>OU</span>
+                <hr>
+            </div>
+
+            <button id="btn-login-google" class="btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                Entrar com Google
+            </button>
+        </div>
+    </div>
+
+    <div id="app-principal" class="container">
+        <nav>
+            <button id="nav-avaliar" class="active">📝 Avaliar</button>
+            <button id="nav-dashboard">📊 Painel</button>
+            <button id="nav-config">⚙️ Config</button>
+        </nav>
+
+        <div id="sec-config" class="card hidden">
+            <h3>⚙️ Configuração da Unidade</h3>
+            <label>Nome da Unidade:</label>
+            <input type="text" id="cfgUnidade" placeholder="Ex: Jaguar">
+            <label>Membros (um por linha):</label>
+            <textarea id="cfgMembros" rows="5" placeholder="João&#10;Maria"></textarea>
+            <button id="btn-salvar-config" class="btn btn-primary">💾 Salvar na Nuvem</button>
+        </div>
+
+        <div id="sec-avaliar" class="card">
+            <h3>Nova Avaliação</h3>
+            <div class="grid-notas" style="margin-bottom: 0;">
+                <select id="selMes">
+                    <option>Janeiro</option>
+                    <option>Fevereiro</option>
+                    <option>Março</option>
+                    <option>Abril</option>
+                    <option>Maio</option>
+                    <option>Junho</option>
+                    <option>Julho</option>
+                    <option>Agosto</option>
+                    <option>Setembro</option>
+                    <option>Outubro</option>
+                    <option>Novembro</option>
+                    <option>Dezembro</option>
+                </select>
+                <select id="selSemana">
+                    <option>Semana 1</option>
+                    <option>Semana 2</option>
+                    <option>Semana 3</option>
+                    <option>Semana 4</option>
+                    <option>Semana 5</option>
+                </select>
+            </div>
+            <button id="btn-iniciar" class="btn btn-primary">▶️ Iniciar</button>
+
+            <div id="tabela-regras" class="regras-box">
+                <h4>📋 Critérios de Avaliação</h4>
+                <div class="regras-grid">
+
+                    <div class="regra-item">
+                        <strong>01. Frequência</strong>
+                        <span>Presença: 30 | Ausência: 15</span>
+                    </div>
+
+                    <div class="regra-item">
+                        <strong>02. Devoção</strong>
+                        <span>Completo: 40 | Incompleto: 20</span>
+                    </div>
+
+                    <div class="regra-item">
+                        <strong>03. Uniforme</strong>
+                        <span>Completo: 50 | Incompleto: 20</span>
+                    </div>
+
+                    <div class="regra-item">
+                        <strong>04. Higiene</strong>
+                        <span>Alinhado: 30 | Desalinhado: 15</span>
+                    </div>
+
+                    <div class="regra-item">
+                        <strong>05. Classe Bíblica</strong>
+                        <span>Presença: 50 | Ausência: 25</span>
+                    </div>
+
+                    <div class="regra-item">
+                        <strong>06. Ano Bíblico</strong>
+                        <span>Em Dias: 40 | Atraso: 30</span>
+                    </div>
+
+                    <div class="regra-item">
+                        <strong>07. Materiais</strong>
+                        <span>Completo: 40 | Incompleto: 20</span>
+                    </div>
+
+                    <div class="regra-item">
+                        <strong>08. Disciplina</strong>
+                        <span>Disciplinado: 40 | Indisciplinado: 25</span>
+                    </div>
+
+                </div>
+                <p class="nota-rodape">Pontuação Máxima Semanal: <strong>320 pontos</strong></p>
+            </div>
+
+            <div id="wizard-form" class="hidden"
+                style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
+                <h2 id="wiz-nome" style="color: #E65100; text-align: center;">Nome do Membro</h2>
+                <div class="grid-notas">
+                    <div><small>01 Frequencia</small><input type="number" id="n1"></div>
+                    <div><small>02 Devoção</small><input type="number" id="n2"></div>
+                    <div><small>03 Uniforme</small><input type="number" id="n3"></div>
+                    <div><small>04 Higiene</small><input type="number" id="n4"></div>
+                    <div><small>05 Boa Ação</small><input type="number" id="n5"></div>
+                    <div><small>06 Ano Bíblico</small><input type="number" id="n6"></div>
+                    <div><small>07 Materiais</small><input type="number" id="n7"></div>
+                    <div><small>08 Disciplina</small><input type="number" id="n8"></div>
+                </div>
+                <button id="btn-proximo" class="btn btn-primary">Salvar e Próximo ➡️</button>
+            </div>
+        </div>
+        <div id="sec-dashboard" class="hidden">
+
+            <div class="card" style="text-align: center; background: #fff3e0; border: 1px solid #ffe0b2;">
+                <h4 style="margin: 0 0 10px 0; color: #E65100;">📅 Filtrar Período</h4>
+                <div class="grid-notas" style="margin-bottom: 0;">
+                    <select id="dashMes" onchange="atualizarDashboard()">
+                        <option>Janeiro</option>
+                        <option>Fevereiro</option>
+                        <option>Março</option>
+                        <option>Abril</option>
+                        <option>Maio</option>
+                        <option>Junho</option>
+                        <option>Julho</option>
+                        <option>Agosto</option>
+                        <option>Setembro</option>
+                        <option>Outubro</option>
+                        <option>Novembro</option>
+                        <option>Dezembro</option>
+                    </select>
+                    <select id="dashSemana" onchange="atualizarDashboard()">
+                        <option>Semana 1</option>
+                        <option>Semana 2</option>
+                        <option>Semana 3</option>
+                        <option>Semana 4</option>
+                        <option>Semana 5</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="card-destaque" class="card"
+                style="text-align: center; background: #e3f2fd; border: 1px solid #bbdefb; display: none;">
+                <h3 style="color: #1565c0; margin: 0;">🌟 Destaque da Semana</h3>
+                <p style="font-size: 1.3rem; margin: 15px 0 5px 0;">
+                    <strong id="nome-destaque">---</strong>
+                </p>
+                <small style="color: #1565c0; font-weight: bold;">
+                    <span id="pontos-destaque">0</span> pontos
+                </small>
+            </div>
+
+            <div class="card">
+                <h3 style="text-align: center;">Desempenho Geral</h3>
+                <div class="chart-container">
+                    <div class="pie-chart" id="grafico-geral"></div>
+                    <div class="legenda-grafico" id="legenda-geral"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Pontuações da Unidade</h3>
+                <div id="lista-dashboard">Carregando...</div>
+            </div>
+        </div>
+
+        <div id="modal-detalhes" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="titulo-detalhe">Detalhes</h3>
+                <div class="chart-container">
+                    <div class="pie-chart" id="grafico-individual"></div>
+                </div>
+                <h4>Histórico:</h4>
+                <ul id="lista-historico" style="padding:0; list-style:none;"></ul>
+                <button onclick="fecharDetalhes()" class="btn btn-danger">Fechar</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module" src="script.js"></script>
+
+</body>
+
+</html>
