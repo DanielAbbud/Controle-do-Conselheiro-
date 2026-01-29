@@ -495,10 +495,56 @@ select:focus {
 }
 
 /* Login Card específico */
+/* --- CORREÇÃO DO LOGIN --- */
 .login-card {
     text-align: center;
     max-width: 400px;
     margin: 40px auto;
+    display: flex;
+    /* Adicionado para organizar em coluna */
+    flex-direction: column;
+    /* Adicionado */
+    gap: 10px;
+    /* Espaço entre os itens */
+}
+
+.divisor {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    /* Garante espaço em cima e embaixo */
+    color: #999;
+    font-size: 0.8rem;
+    width: 100%;
+}
+
+.divisor hr {
+    flex: 1;
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 0 10px;
+}
+
+.btn-google {
+    background: white;
+    color: #444;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 5px;
+    /* Garante que não suba */
+    transition: background 0.2s;
+}
+
+.btn-google:hover {
+    background-color: #f7f7f7;
 }
 
 /* =========================================
