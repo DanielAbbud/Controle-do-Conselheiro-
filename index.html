@@ -21,7 +21,6 @@
             <button id="btn-logout" class="btn btn-logout hidden">Sair</button>
         </div>
     </header>
-    </header>
 
     <div id="tela-login" class="container">
         <div class="card login-card">
@@ -29,6 +28,8 @@
             <p style="color: #666; margin-bottom: 20px;">Entre com seu email ou Google.</p>
 
             <div class="form-login">
+                <input type="text" id="nome-input" placeholder="👤 Como quer ser chamado?" class="hidden">
+
                 <input type="email" id="email-input" placeholder="📧 Seu email">
                 <input type="password" id="senha-input" placeholder="🔒 Sua senha">
 
@@ -68,32 +69,46 @@
 
         <div id="sec-config" class="card hidden">
             <h3>⚙️ Configuração da Unidade</h3>
-            <label>Nome da Unidade:</label>
+
+            <label>👤 Nome do Conselheiro (Para o cabeçalho):</label>
+            <input type="text" id="cfgNomeConselheiro" placeholder="Ex: Daniel Abbud">
+
+            <label>🛡️ Nome da Unidade:</label>
             <input type="text" id="cfgUnidade" placeholder="Ex: Jaguar">
-            <label>Membros (um por linha):</label>
+
+            <label>📋 Membros (um por linha):</label>
             <textarea id="cfgMembros" rows="5" placeholder="João&#10;Maria"></textarea>
-            <button id="btn-salvar-config" class="btn btn-primary">💾 Salvar na Nuvem</button>
+
+            <button id="btn-salvar-config" class="btn btn-primary">💾 Salvar Tudo</button>
         </div>
+
         <div id="sec-admin" class="card hidden">
             <h3 style="text-align:center; color:#333;">🕵️ Histórico de Atividades</h3>
-            <p style="text-align:center; font-size:0.9rem; color:#666; margin-bottom: 20px;">
-                Monitoramento de segurança da Unidade
-            </p>
 
-            <div style="text-align:center; margin-bottom:20px;">
-                <button onclick="carregarLogs()" class="btn btn-primary" style="width:auto; padding: 10px 30px;">
-                    🔄 Atualizar Lista
-                </button>
+            <div
+                style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #ddd;">
+                <label style="display:block; margin-bottom:8px; font-weight:bold; color:#555;">📅 Filtrar por
+                    Data:</label>
+                <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                    <input type="date" id="filtroDataAdmin" style="width: auto; margin: 0; padding: 8px;">
+                    <button onclick="carregarLogs()" class="btn btn-primary"
+                        style="width: auto; margin: 0; padding: 10px 20px;">🔍 Buscar</button>
+                </div>
+                <small style="color:#888; display:block; margin-top:8px;">
+                    Deixe a data em branco para ver os últimos 50 registros.
+                </small>
             </div>
 
             <ul id="lista-logs" style="padding:0; list-style:none;">
-                <li style="text-align:center; color:#999;">Aguardando atualização...</li>
+                <li style="text-align:center; color:#999;">Clique em buscar...</li>
             </ul>
         </div>
 
         <div id="sec-avaliar" class="card">
             <h3>Nova Avaliação</h3>
-            <div class="grid-notas" style="margin-bottom: 0;">
+
+            <label style="font-size: 0.9rem; font-weight: bold; color: #555;">1. Escolha o Período:</label>
+            <div class="grid-notas" style="margin-bottom: 10px; grid-template-columns: 1fr 1fr;">
                 <select id="selMes">
                     <option>Janeiro</option>
                     <option>Fevereiro</option>
@@ -116,75 +131,78 @@
                     <option>Semana 5</option>
                 </select>
             </div>
-            <button id="btn-iniciar" class="btn btn-primary">▶️ Iniciar</button>
+
+            <div
+                style="background: #fff3e0; padding: 15px; border-radius: 8px; border: 1px solid #ffe0b2; margin-bottom: 20px;">
+                <p style="font-weight:bold; color:#E65100; margin-bottom:5px;">Opção A: Fazer Todos</p>
+                <button id="btn-iniciar" class="btn btn-primary" style="margin-bottom: 15px;">▶️ Iniciar Sequência (Do
+                    1º ao Último)</button>
+
+                <div class="divisor" style="margin: 10px 0;">
+                    <hr><span>OU</span>
+                    <hr>
+                </div>
+
+                <p style="font-weight:bold; color:#1565C0; margin-bottom:5px;">Opção B: Corrigir / Avaliar Um</p>
+                <div style="display: flex; gap: 10px;">
+                    <select id="selMembroCorrecao" style="margin:0; flex-grow: 1;">
+                        <option value="">Selecione para corrigir...</option>
+                    </select>
+                    <button id="btn-corrigir" class="btn btn-secondary"
+                        style="width: auto; margin:0; white-space: nowrap;">✏️ Ir</button>
+                </div>
+            </div>
 
             <div id="tabela-regras" class="regras-box">
                 <h4>📋 Critérios de Avaliação</h4>
                 <div class="regras-grid">
-
-                    <div class="regra-item">
-                        <strong>01. Frequência</strong>
-                        <span>Presente: 30 | Atrasado: 15 | Falta: 0</span>
+                    <div class="regra-item"><strong>01. Frequência</strong><span>Presente: 30 | Atrasado: 15 | Falta:
+                            0</span></div>
+                    <div class="regra-item"><strong>02. Devoção Matinal</strong><span>Completo: 40 | Incompleto: 20 |
+                            Não fez: 0</span></div>
+                    <div class="regra-item"><strong>03. Uniforme</strong><span>Completo: 50 | Incompleto: 20 | Sem:
+                            0</span></div>
+                    <div class="regra-item"><strong>04. Higiene</strong><span>Alinhado: 30 | Desalinhado: 15 </span>
                     </div>
-
-                    <div class="regra-item">
-                        <strong>02. Devoção Matinal</strong>
-                        <span>Completo: 40 | Incompleto: 20 | Não fez: 0</span>
+                    <div class="regra-item"><strong>05. Classe Bíblica</strong><span>Presente: 50 | Atrasado: 25 |
+                            Falta: 0</span></div>
+                    <div class="regra-item"><strong>06. Ano Bíblico</strong><span>Em Dia: 40 | Atrasado: 20 | Não leu:
+                            0</span></div>
+                    <div class="regra-item"><strong>07. Materiais</strong><span>Completo: 40 | Falta Item: 20 | Sem:
+                            0</span></div>
+                    <div class="regra-item"><strong>08. Disciplina</strong><span>Exemplar: 40 | Indisciplina: 0</span>
                     </div>
-
-                    <div class="regra-item">
-                        <strong>03. Uniforme</strong>
-                        <span>Completo: 50 | Incompleto: 20 | Sem: 0</span>
-                    </div>
-
-                    <div class="regra-item">
-                        <strong>04. Higiene</strong>
-                        <span>Alinhado: 30 | Desalinhado: 15 </span>
-                    </div>
-
-                    <div class="regra-item">
-                        <strong>05. Classe Bíblica</strong>
-                        <span>Presente: 50 | Atrasado: 25 | Falta: 0</span>
-                    </div>
-
-                    <div class="regra-item">
-                        <strong>06. Ano Bíblico</strong>
-                        <span>Em Dia: 40 | Atrasado: 20 | Não leu: 0</span>
-                    </div>
-
-                    <div class="regra-item">
-                        <strong>07. Materiais</strong>
-                        <span>Completo: 40 | Falta Item: 20 | Sem: 0</span>
-                    </div>
-
-                    <div class="regra-item">
-                        <strong>08. Disciplina</strong>
-                        <span>Exemplar: 40 | Indisciplina: 0</span>
-                    </div>
-
                 </div>
                 <p class="nota-rodape">Pontuação Máxima Semanal: <strong>320 pontos</strong></p>
             </div>
 
             <div id="wizard-form" class="hidden"
-                style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
-                <h2 id="wiz-nome" style="color: #E65100; text-align: center;">Nome do Membro</h2>
+                style="margin-top: 20px; border-top: 2px dashed #E65100; padding-top: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h2 id="wiz-nome" style="color: #E65100; margin:0;">Nome do Membro</h2>
+                    <span style="font-size:0.8rem; color:#999;" id="contador-passo"></span>
+                </div>
+
                 <div class="grid-notas">
                     <div><small>01 Frequencia</small><input type="number" id="n1" placeholder="Max 30"></div>
                     <div><small>02 Devoção Matinal</small><input type="number" id="n2" placeholder="Max 40"></div>
                     <div><small>03 Uniforme</small><input type="number" id="n3" placeholder="Max 50"></div>
                     <div><small>04 Higiene</small><input type="number" id="n4" placeholder="Max 30"></div>
-                    <div><small>05 Classe Bíblica</small><input type="number" id="n5" placeholder="Max 50"></div>
-                    <div><small>06 Ano Bíblico</small><input type="number" id="n6" placeholder="Max 40"></div>
+                    <div><small>05 Classe Biblica</small><input type="number" id="n5" placeholder="Max 50"></div>
+                    <div><small>06 Ano Bíblico.</small><input type="number" id="n6" placeholder="Max 40"></div>
                     <div><small>07 Materiais</small><input type="number" id="n7" placeholder="Max 40"></div>
                     <div><small>08 Disciplina</small><input type="number" id="n8" placeholder="Max 40"></div>
                 </div>
-                <button id="btn-proximo" class="btn btn-primary">Salvar e Próximo ➡️</button>
+
+                <div style="display:flex; gap:10px; margin-top: 15px;">
+                    <button id="btn-proximo" class="btn btn-primary">Salvar e Próximo ➡️</button>
+                    <button onclick="fecharWizard()" class="btn btn-secondary"
+                        style="margin:0; border:none; color:#666;">Cancelar</button>
+                </div>
             </div>
         </div>
 
         <div id="sec-dashboard" class="hidden">
-
             <div class="card" style="text-align: center; background: #fff3e0; border: 1px solid #ffe0b2;">
                 <h4 style="margin: 0 0 10px 0; color: #E65100;">📅 Filtrar Período</h4>
                 <div class="grid-notas" style="margin-bottom: 0;">
@@ -207,7 +225,6 @@
                         <option>Semana 2</option>
                         <option>Semana 3</option>
                         <option>Semana 4</option>
-                        <option>Semana 5</option>
                     </select>
                 </div>
             </div>

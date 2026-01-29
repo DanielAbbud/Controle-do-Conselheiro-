@@ -22,6 +22,11 @@
     padding: 0;
 }
 
+html {
+    scroll-behavior: smooth;
+    /* Garante rolagem suave nas telas */
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -72,7 +77,6 @@ small {
     margin-bottom: 20px;
     box-shadow: var(--shadow);
     border: none;
-    /* Remove bordas antigas */
     animation: slideIn 0.4s ease-out;
 }
 
@@ -94,7 +98,6 @@ nav {
     gap: 10px;
     margin-bottom: 20px;
     overflow-x: auto;
-    /* Permite rolar no celular se for pequeno */
     padding-bottom: 5px;
 }
 
@@ -146,6 +149,11 @@ nav button.active {
     background: white;
     color: var(--primary-color);
     border: 2px solid var(--primary-color);
+    /* Removido margin-top global para não quebrar o layout lateral */
+}
+
+/* Adiciona margem no botão secundário APENAS na tela de login */
+.form-login .btn-secondary {
     margin-top: 10px;
 }
 
@@ -217,7 +225,6 @@ textarea:focus {
 .grid-notas {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    /* 2 colunas no celular */
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -225,7 +232,6 @@ textarea:focus {
 @media(min-width: 600px) {
     .grid-notas {
         grid-template-columns: repeat(4, 1fr);
-        /* 4 colunas no PC */
     }
 }
 
@@ -245,7 +251,6 @@ textarea:focus {
 /* --- TABELA DE REGRAS (Visual Clean) --- */
 .regras-box {
     background: #fff8e1;
-    /* Amarelo bem clarinho */
     border: 1px solid #ffe0b2;
     padding: 15px;
     border-radius: 8px;
@@ -436,7 +441,7 @@ textarea:focus {
     margin-right: 15px;
     /* Afasta do texto */
 
-    /* Em vez de borda, vamos usar uma sombra suave direto na imagem */
+    /* Sombra suave seguindo o contorno */
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 

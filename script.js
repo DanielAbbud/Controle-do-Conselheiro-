@@ -8,7 +8,8 @@ import {
     signOut,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
@@ -31,67 +32,87 @@ let userAtual = null;
 let dadosUnidade = { unidade: "", membros: [] };
 let avaliacoesCache = [];
 
-// Configuração dos Gráficos
-const nomesCategorias = ["Freq.", "Devoção", "Unif.", "Hig.", "Boa Ação", "Ano Bíb.", "Taxa", "Disc."];
+const nomesCategorias = ["Frequencia", "Devoção Matinal", "Uniforme", "Higiene", "Materiais", "Ano Bíblico", "Classe Biblica", "Disciplina."];
 const coresGrafico = ['#FF5722', '#FFC107', '#4CAF50', '#03A9F4', '#9C27B0', '#E91E63', '#795548', '#607D8B'];
 
 
-// --- FUNÇÃO ESPIÃ (LOGS) 🕵️‍♂️ ---
+// --- FUNÇÃO DETECTAR DISPOSITIVO 📱 ---
+function detectarDispositivo() {
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) return "📱 Android";
+    if (/iPhone|iPad|iPod/i.test(ua)) return "📱 iPhone/iPad";
+    if (/Windows/i.test(ua)) return "💻 Windows";
+    if (/Mac/i.test(ua)) return "💻 Mac";
+    if (/Linux/i.test(ua)) return "💻 Linux";
+    return "🌐 Outro";
+}
+
+// --- FUNÇÃO ESPIÃ (LOGS CRÍTICOS) 🕵️‍♂️ ---
 async function registrarLog(acao, detalhes) {
-    if (!userAtual) return;
+    let identificacao = "Desconhecido";
+
+    if (userAtual) {
+        identificacao = userAtual.displayName
+            ? `${userAtual.displayName} (${userAtual.email})`
+            : userAtual.email;
+    } else {
+        const emailTentativa = document.getElementById('email-input')?.value;
+        if (emailTentativa) identificacao = `Tentativa: ${emailTentativa}`;
+    }
+
     try {
         await addDoc(collection(db, "logs"), {
-            usuario: userAtual.email || "Desconhecido",
-            uid: userAtual.uid,
+            usuario: identificacao,
+            uid: userAtual ? userAtual.uid : "anonimo",
             acao: acao,
             detalhes: detalhes,
             data: new Date().toISOString(),
+            dispositivo: detectarDispositivo(),
             navegador: navigator.userAgent
         });
-        console.log(`📝 Log registrado: ${acao}`);
+        console.log(`📝 Log Importante: ${acao}`);
     } catch (e) {
-        console.error("Erro ao gravar log:", e);
+        console.error("Erro log:", e);
     }
 }
 
 
 // --- 1. LÓGICA DE LOGIN ---
-
 let modoCadastro = false;
 document.getElementById('link-toggle').addEventListener('click', (e) => {
     e.preventDefault();
     modoCadastro = !modoCadastro;
-
     if (modoCadastro) {
         document.getElementById('titulo-login').innerText = "Criar Nova Conta";
         document.getElementById('btn-entrar-email').classList.add('hidden');
         document.getElementById('btn-criar-conta').classList.remove('hidden');
         document.getElementById('txt-toggle').innerText = "Já tem conta?";
         document.getElementById('link-toggle').innerText = "Faça login";
+        document.getElementById('nome-input').classList.remove('hidden');
+        document.getElementById('nome-input').focus();
     } else {
         document.getElementById('titulo-login').innerText = "Bem-vindo!";
         document.getElementById('btn-entrar-email').classList.remove('hidden');
         document.getElementById('btn-criar-conta').classList.add('hidden');
         document.getElementById('txt-toggle').innerText = "Não tem conta?";
         document.getElementById('link-toggle').innerText = "Crie uma aqui";
+        document.getElementById('nome-input').classList.add('hidden');
     }
 });
 
-// Recuperar Senha
 document.getElementById('btn-esqueci-senha').addEventListener('click', (e) => {
     e.preventDefault();
     const email = document.getElementById('email-input').value;
     if (!email) {
-        alert("⚠️ Por favor, digite seu email no campo acima primeiro.");
-        document.getElementById('email-input').focus();
+        alert("⚠️ Digite seu email primeiro.");
         return;
     }
+    registrarLog("Segurança", `Solicitou reset de senha para: ${email}`);
     sendPasswordResetEmail(auth, email)
-        .then(() => alert("📧 Email de recuperação enviado! Verifique sua caixa de entrada."))
+        .then(() => alert("📧 Email enviado!"))
         .catch((error) => alert("Erro: " + error.message));
 });
 
-// Entrar com Email
 document.getElementById('btn-entrar-email').addEventListener('click', () => {
     const email = document.getElementById('email-input').value;
     const senha = document.getElementById('senha-input').value;
@@ -99,16 +120,28 @@ document.getElementById('btn-entrar-email').addEventListener('click', () => {
         .catch((error) => tratarErroLogin(error));
 });
 
-// Criar Conta
-document.getElementById('btn-criar-conta').addEventListener('click', () => {
+document.getElementById('btn-criar-conta').addEventListener('click', async () => {
+    const nome = document.getElementById('nome-input').value.trim();
     const email = document.getElementById('email-input').value;
     const senha = document.getElementById('senha-input').value;
-    createUserWithEmailAndPassword(auth, email, senha)
-        .then(() => alert("Conta criada com sucesso!"))
-        .catch((error) => tratarErroLogin(error));
+
+    if (!nome) return alert("⚠️ Digite seu nome.");
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
+        const user = userCredential.user;
+        await updateProfile(user, { displayName: nome });
+
+        userAtual = user;
+        registrarLog("Conta", `Novo usuário cadastrado: ${nome}`);
+
+        alert(`🎉 Bem-vindo, ${nome}!`);
+        document.getElementById('user-name').innerText = nome;
+    } catch (error) {
+        tratarErroLogin(error);
+    }
 });
 
-// Entrar com Google
 document.getElementById('btn-login-google').addEventListener('click', () => {
     signInWithPopup(auth, provider).catch(e => alert("Erro: " + e.message));
 });
@@ -116,19 +149,18 @@ document.getElementById('btn-login-google').addEventListener('click', () => {
 function tratarErroLogin(error) {
     let msg = error.message;
     if (error.code === 'auth/invalid-email') msg = "Email inválido.";
-    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') msg = "Email ou senha incorretos.";
-    if (error.code === 'auth/email-already-in-use') msg = "Este email já está cadastrado.";
-    if (error.code === 'auth/weak-password') msg = "A senha deve ter pelo menos 6 caracteres.";
+    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') msg = "Senha incorreta.";
+
+    registrarLog("Erro Login", `Falha ao entrar: ${msg}`);
+
     alert("Atenção: " + msg);
 }
 
-// Logout
 document.getElementById('btn-logout').addEventListener('click', () => {
-    registrarLog("Logout", "Usuário saiu do sistema");
+    registrarLog("Logout", "Saiu do sistema");
     signOut(auth);
 });
 
-// 👇 SEU UID DE ADMINISTRADOR
 const ADMIN_UID = "V7FUkGG035dQiBo5FoB3DVYF14N2";
 
 onAuthStateChanged(auth, (user) => {
@@ -143,14 +175,12 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('btn-logout').classList.remove('hidden');
         document.getElementById('user-name').innerText = user.displayName || user.email;
 
-        // --- TRAVA DE SEGURANÇA 🔐 ---
         const btnAdmin = document.getElementById('nav-admin');
         if (user.uid === ADMIN_UID) {
             btnAdmin.style.display = "inline-block";
         } else {
             btnAdmin.style.display = "none";
         }
-
         carregarConfiguracao();
     } else {
         userAtual = null;
@@ -167,21 +197,45 @@ onAuthStateChanged(auth, (user) => {
 // --- 2. CONFIGURAÇÃO ---
 async function carregarConfiguracao() {
     if (!userAtual) return;
+    document.getElementById('cfgNomeConselheiro').value = userAtual.displayName || "";
+
     const docSnap = await getDoc(doc(db, "configuracoes", userAtual.uid));
+    const selectCorrecao = document.getElementById('selMembroCorrecao');
+    if (selectCorrecao) selectCorrecao.innerHTML = "<option value=''>Selecione para corrigir...</option>";
+
     if (docSnap.exists()) {
         dadosUnidade = docSnap.data();
         document.getElementById('cfgUnidade').value = dadosUnidade.unidade || "";
         document.getElementById('cfgMembros').value = (dadosUnidade.membros || []).join('\n');
+
+        if (dadosUnidade.membros && selectCorrecao) {
+            dadosUnidade.membros.forEach(nome => {
+                let option = document.createElement("option");
+                option.text = nome;
+                option.value = nome;
+                selectCorrecao.add(option);
+            });
+        }
     }
 }
 
 document.getElementById('btn-salvar-config').addEventListener('click', async () => {
+    const nomeConselheiro = document.getElementById('cfgNomeConselheiro').value.trim();
     const unidade = document.getElementById('cfgUnidade').value;
     const membros = document.getElementById('cfgMembros').value.split('\n').filter(n => n.trim());
+
     await setDoc(doc(db, "configuracoes", userAtual.uid), { unidade, membros });
-    registrarLog("Configuração", `Alterou unidade/membros`);
+
+    if (nomeConselheiro) {
+        await updateProfile(userAtual, { displayName: nomeConselheiro }).then(() => {
+            document.getElementById('user-name').innerText = nomeConselheiro;
+        });
+    }
+
+    registrarLog("Configuração", `Alterou dados da Unidade ou Membros`);
     dadosUnidade = { unidade, membros };
-    alert("✅ Salvo!");
+    carregarConfiguracao();
+    alert("✅ Salvo com sucesso!");
     navegar('avaliar');
 });
 
@@ -192,23 +246,38 @@ let wizardIndex = 0;
 document.getElementById('btn-iniciar').addEventListener('click', () => {
     if (!dadosUnidade.membros?.length) return alert("Cadastre membros na Config!");
     wizardIndex = 0;
-    document.getElementById('wizard-form').classList.remove('hidden');
-    carregarMembroWizard();
+    abrirWizard();
 });
+
+document.getElementById('btn-corrigir').addEventListener('click', () => {
+    const nomeAlvo = document.getElementById('selMembroCorrecao').value;
+    if (!nomeAlvo) return alert("Selecione um membro!");
+
+    const indexEncontrado = dadosUnidade.membros.indexOf(nomeAlvo);
+    if (indexEncontrado !== -1) {
+        wizardIndex = indexEncontrado;
+        abrirWizard();
+    }
+});
+
+function abrirWizard() {
+    document.getElementById('wizard-form').classList.remove('hidden');
+    document.getElementById('wizard-form').scrollIntoView({ behavior: 'smooth' });
+    carregarMembroWizard();
+}
 
 function carregarMembroWizard() {
     document.getElementById('wiz-nome').innerText = dadosUnidade.membros[wizardIndex];
+    document.getElementById('contador-passo').innerText = `${wizardIndex + 1} de ${dadosUnidade.membros.length}`;
     for (let i = 1; i <= 8; i++) document.getElementById('n' + i).value = '';
     document.getElementById('n1').focus();
 }
 
+// SALVAR AVALIAÇÃO (AÇÃO IMPORTANTE - TEM LOG)
 document.getElementById('btn-proximo').addEventListener('click', async () => {
-    if (!dadosUnidade.membros[wizardIndex]) return;
-
     const nomeMembro = dadosUnidade.membros[wizardIndex];
     const mes = document.getElementById('selMes').value;
     const semana = document.getElementById('selSemana').value;
-
     const notas = [];
     let total = 0;
     for (let i = 1; i <= 8; i++) {
@@ -222,10 +291,11 @@ document.getElementById('btn-proximo').addEventListener('click', async () => {
 
     try {
         const docSnap = await getDoc(docRef);
+        let acaoLog = "Avaliação";
+
         if (docSnap.exists()) {
-            const pular = confirm(`⛔ ${nomeMembro} já tem nota em ${mes}/${semana}.\nDeseja PULAR?`);
-            if (pular) avancarProximoMembro();
-            return;
+            if (!confirm(`⚠️ ${nomeMembro} JÁ TEM NOTA. Sobrescrever?`)) return;
+            acaoLog = "Alteração";
         }
 
         await setDoc(docRef, {
@@ -238,12 +308,13 @@ document.getElementById('btn-proximo').addEventListener('click', async () => {
             data: new Date().toISOString()
         });
 
-        registrarLog("Avaliação", `Avaliou ${nomeMembro} (${total} pts)`);
+        registrarLog(acaoLog, `${nomeMembro} (${total} pts) | ${mes}/${semana}`);
+
         avaliacoesCache = [];
         avancarProximoMembro();
-
     } catch (error) {
         alert("Erro: " + error.message);
+        registrarLog("Erro Sistema", `Falha ao salvar nota: ${error.message}`);
     }
 });
 
@@ -252,10 +323,16 @@ function avancarProximoMembro() {
     if (wizardIndex < dadosUnidade.membros.length) {
         carregarMembroWizard();
     } else {
-        alert("🎉 Lista finalizada!");
-        document.getElementById('wizard-form').classList.add('hidden');
+        alert("🎉 Finalizado!");
+        fecharWizard();
         navegar('dashboard');
     }
+}
+
+window.fecharWizard = function () {
+    document.getElementById('wizard-form').classList.add('hidden');
+    document.getElementById('selMembroCorrecao').value = "";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 
@@ -319,10 +396,8 @@ window.abrirDetalhes = function (nome) {
     const lista = document.getElementById('lista-historico');
     document.getElementById('titulo-detalhe').innerText = nome;
     lista.innerHTML = "";
-
     const dados = avaliacoesCache.filter(d => d.nome === nome);
     const soma = [0, 0, 0, 0, 0, 0, 0, 0];
-
     dados.forEach(d => {
         lista.innerHTML += `
             <li style="border-bottom:1px solid #ddd; padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
@@ -335,17 +410,20 @@ window.abrirDetalhes = function (nome) {
     setTimeout(() => gerarGraficoPizza(soma, 'grafico-individual'), 100);
 }
 
+// EXCLUIR (AÇÃO IMPORTANTE - TEM LOG)
 window.excluirAvaliacao = async function (id, nome) {
     if (confirm("Deseja excluir?")) {
         await deleteDoc(doc(db, "avaliacoes", id));
-        registrarLog("Exclusão", `Excluiu nota de ${nome}`);
+        registrarLog("Exclusão", `Excluiu nota de: ${nome}`);
         avaliacoesCache = avaliacoesCache.filter(i => i.id !== id);
         alert("Excluído!");
         abrirDetalhes(nome);
         atualizarDashboard();
     }
 }
-window.fecharDetalhes = () => document.getElementById('modal-detalhes').classList.add('hidden');
+window.fecharDetalhes = () => {
+    document.getElementById('modal-detalhes').classList.add('hidden');
+}
 
 function gerarGraficoPizza(dados, idGrafico, idLegenda = null) {
     const total = dados.reduce((a, b) => a + b, 0);
@@ -363,60 +441,88 @@ function gerarGraficoPizza(dados, idGrafico, idLegenda = null) {
     if (idLegenda) document.getElementById(idLegenda).innerHTML = leg;
 }
 
-// --- 6. ADMIN (CARREGAR LOGS) ---
+// --- 6. ADMIN COM FILTRO DE DATA 📅 ---
 window.carregarLogs = async function () {
     const lista = document.getElementById('lista-logs');
+    const dataFiltro = document.getElementById('filtroDataAdmin').value;
     lista.innerHTML = "Carregando...";
 
-    // Busca os últimos 20 logs ordenados por data
-    const q = query(collection(db, "logs"), orderBy("data", "desc"), limit(20));
-    const snap = await getDocs(q);
+    let q;
 
-    lista.innerHTML = "";
-    snap.forEach(doc => {
-        const d = doc.data();
-        const dataFormatada = new Date(d.data).toLocaleString('pt-BR');
+    if (dataFiltro) {
+        // Lógica de filtro: Dia completo (00:00 até 23:59)
+        // Criando datas em ISO String para o Firebase entender
+        const start = new Date(dataFiltro);
+        start.setUTCHours(0, 0, 0, 0); // Ajuste UTC para garantir o dia correto
 
-        lista.innerHTML += `
-            <li class="log-item log-tipo-${d.acao.split(' ')[0]}">
-                <div class="log-header">
-                    <span>${dataFormatada}</span>
-                    <span class="log-email">${d.usuario}</span>
-                </div>
-                <div class="log-texto">
-                    ${d.acao}: ${d.detalhes}
-                </div>
-            </li>
-        `;
-    });
+        const end = new Date(dataFiltro);
+        end.setUTCHours(23, 59, 59, 999);
 
-    if (snap.empty) lista.innerHTML = "<p align='center'>Nenhum registro encontrado.</p>";
+        // AQUI: Firestore exige o ISO String para comparar
+        // Como o input date vem YYYY-MM-DD, a conversão é simples
+        // Porem, para evitar problemas de fuso, comparamos Strings
+
+        q = query(collection(db, "logs"),
+            where("data", ">=", start.toISOString()),
+            where("data", "<=", end.toISOString()),
+            orderBy("data", "desc")
+        );
+    } else {
+        // Padrão: Últimos 50
+        q = query(collection(db, "logs"), orderBy("data", "desc"), limit(50));
+    }
+
+    try {
+        const snap = await getDocs(q);
+        lista.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            const dataFormatada = new Date(d.data).toLocaleString('pt-BR');
+            const dispositivo = d.dispositivo || "❓ Desc.";
+
+            let cor = "#ccc";
+            if (d.acao.includes("Erro")) cor = "#f44336";
+            if (d.acao.includes("Avaliação") || d.acao.includes("Alteração")) cor = "#2196F3";
+            if (d.acao.includes("Exclusão")) cor = "#D32F2F";
+            if (d.acao.includes("Login") || d.acao.includes("Conta")) cor = "#4CAF50";
+
+            lista.innerHTML += `
+                <li class="log-item" style="border-left: 4px solid ${cor}">
+                    <div class="log-header">
+                        <span>${dataFormatada}</span>
+                        <span class="log-email" title="${dispositivo}">${dispositivo} | ${d.usuario}</span>
+                    </div>
+                    <div class="log-texto">
+                        <strong>${d.acao}:</strong> ${d.detalhes}
+                    </div>
+                </li>
+            `;
+        });
+        if (snap.empty) lista.innerHTML = "<p align='center'>Nenhum registro encontrado para esta data.</p>";
+
+    } catch (error) {
+        console.error(error);
+        // Fallback caso falte índice composto no Firebase (raro com essa estrutura)
+        lista.innerHTML = "<p align='center' style='color:red'>Erro ao filtrar. Tente sem data.</p>";
+    }
 }
 
-// --- 7. NAVEGAÇÃO CORRIGIDA ✅ ---
+// --- 7. NAVEGAÇÃO ---
 window.navegar = function (aba) {
-    // Esconde todas as telas e desativa botões
     ['config', 'avaliar', 'dashboard', 'admin'].forEach(id => {
         const el = document.getElementById('sec-' + id);
         if (el) el.classList.add('hidden');
-
         const btn = document.getElementById('nav-' + id);
         if (btn) btn.classList.remove('active');
     });
-
-    // Mostra a tela certa
     const telaDestino = document.getElementById('sec-' + aba);
     if (telaDestino) telaDestino.classList.remove('hidden');
-
     const btnDestino = document.getElementById('nav-' + aba);
     if (btnDestino) btnDestino.classList.add('active');
-
-    // Executa ações específicas
     if (aba === 'dashboard') atualizarDashboard();
     if (aba === 'admin') carregarLogs();
 }
 
-// Eventos de clique
 document.getElementById('nav-config').onclick = () => navegar('config');
 document.getElementById('nav-avaliar').onclick = () => navegar('avaliar');
 document.getElementById('nav-dashboard').onclick = () => navegar('dashboard');
