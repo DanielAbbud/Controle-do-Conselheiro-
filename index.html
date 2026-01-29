@@ -4,8 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão Unidade DBV (Nuvem)</title>
+    <title>Cantinho HF</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -29,15 +33,17 @@
 
             <div class="form-login">
                 <input type="text" id="nome-input" placeholder="👤 Como quer ser chamado?" class="hidden">
-
                 <input type="email" id="email-input" placeholder="📧 Seu email">
-                <input type="password" id="senha-input" placeholder="🔒 Sua senha">
-
-                <div style="text-align: right; margin-bottom: 15px;">
-                    <a href="#" id="btn-esqueci-senha"
-                        style="font-size: 0.85rem; color: #E65100; text-decoration: none;">Esqueci minha senha</a>
+                <div style="position: relative;">
+                    <input type="password" id="senha-input" placeholder="🔒 Sua senha" style="padding-right: 45px;">
+                    <i id="olho-senha" class="fa-solid fa-eye-slash" onclick="toggleSenha()"
+                        style="position: absolute; right: 15px; top: 30%; cursor: pointer; color: #666; font-size: 1.1rem;"
+                        title="Mostrar/Esconder Senha"></i>
                 </div>
-
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <a href="#" id="btn-esqueci-senha" style="font-size: 0.85rem; color: #E65100;">Esqueci minha
+                        senha</a>
+                </div>
                 <button id="btn-entrar-email" class="btn btn-primary">Entrar</button>
                 <button id="btn-criar-conta" class="btn btn-secondary hidden">Cadastrar Conta</button>
             </div>
@@ -46,15 +52,13 @@
                 <span id="txt-toggle">Não tem conta?</span>
                 <a href="#" id="link-toggle">Crie uma aqui</a>
             </p>
-
             <div class="divisor">
                 <hr> <span>OU</span>
                 <hr>
             </div>
-
             <button id="btn-login-google" class="btn-google">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-                Entrar com Google
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Entrar com
+                Google
             </button>
         </div>
     </div>
@@ -70,44 +74,58 @@
         <div id="sec-config" class="card hidden">
             <h3>⚙️ Configuração da Unidade</h3>
 
-            <label>👤 Nome do Conselheiro (Para o cabeçalho):</label>
+            <label>👤 Nome do Conselheiro:</label>
             <input type="text" id="cfgNomeConselheiro" placeholder="Ex: Daniel Abbud">
 
             <label>🛡️ Nome da Unidade:</label>
             <input type="text" id="cfgUnidade" placeholder="Ex: Jaguar">
 
-            <label>📋 Membros (um por linha):</label>
-            <textarea id="cfgMembros" rows="5" placeholder="João&#10;Maria"></textarea>
+            <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin:0;">📋 Membros da Unidade</h4>
+                    <button onclick="abrirModalCadastro()" class="btn btn-primary"
+                        style="width: auto; padding: 8px 15px; font-size: 0.9rem;">
+                        <i class="fa-solid fa-plus"></i> Novo Cadastro
+                    </button>
+                </div>
+                <ul id="lista-membros-config"
+                    style="list-style: none; padding: 0; border: 1px solid #eee; border-radius: 5px;">
+                    <li style="text-align: center; color: #999; padding: 10px;">Carregando...</li>
+                </ul>
+            </div>
 
-            <button id="btn-salvar-config" class="btn btn-primary">💾 Salvar Tudo</button>
+            <button id="btn-salvar-config" class="btn btn-secondary" style="margin-top: 20px;">💾 Salvar
+                Alterações</button>
         </div>
 
         <div id="sec-admin" class="card hidden">
-            <h3 style="text-align:center; color:#333;">🕵️ Histórico de Atividades</h3>
+            <h3 style="text-align:center; color:#333;">👮 Painel do Diretor</h3>
 
-            <div
-                style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #ddd;">
-                <label style="display:block; margin-bottom:8px; font-weight:bold; color:#555;">📅 Filtrar por
-                    Data:</label>
-                <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
-                    <input type="date" id="filtroDataAdmin" style="width: auto; margin: 0; padding: 8px;">
-                    <button onclick="carregarLogs()" class="btn btn-primary"
-                        style="width: auto; margin: 0; padding: 10px 20px;">🔍 Buscar</button>
-                </div>
-                <small style="color:#888; display:block; margin-top:8px;">
-                    Deixe a data em branco para ver os últimos 50 registros.
-                </small>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
+                <button onclick="alternarVisaoAdmin('logs')" class="btn btn-secondary" style="font-size: 0.9rem;">🕵️
+                    Logs</button>
+                <button onclick="alternarVisaoAdmin('fichas')" class="btn btn-primary" style="font-size: 0.9rem;">📂
+                    Fichas Cadastrais</button>
             </div>
 
-            <ul id="lista-logs" style="padding:0; list-style:none;">
-                <li style="text-align:center; color:#999;">Clique em buscar...</li>
-            </ul>
+            <div id="admin-view-logs">
+                <div
+                    style="background: #f5f5f5; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    <label style="font-weight:bold;">📅 Data:</label>
+                    <input type="date" id="filtroDataAdmin" style="padding: 5px;">
+                    <button onclick="carregarLogs()" class="btn btn-primary"
+                        style="width: auto; padding: 5px 15px;">🔍</button>
+                </div>
+                <ul id="lista-logs" style="padding:0; list-style:none;"></ul>
+            </div>
+
+            <div id="admin-view-fichas" class="hidden">
+                <div id="lista-fichas-global">Carregando fichas...</div>
+            </div>
         </div>
 
         <div id="sec-avaliar" class="card">
             <h3>Nova Avaliação</h3>
-
-            <label style="font-size: 0.9rem; font-weight: bold; color: #555;">1. Escolha o Período:</label>
             <div class="grid-notas" style="margin-bottom: 10px; grid-template-columns: 1fr 1fr;">
                 <select id="selMes">
                     <option>Janeiro</option>
@@ -128,7 +146,6 @@
                     <option>Semana 2</option>
                     <option>Semana 3</option>
                     <option>Semana 4</option>
-                    <option>Semana 5</option>
                 </select>
             </div>
 
@@ -144,12 +161,15 @@
                 </div>
 
                 <p style="font-weight:bold; color:#1565C0; margin-bottom:5px;">Opção B: Corrigir / Avaliar Um</p>
+
                 <div style="display: flex; gap: 10px;">
                     <select id="selMembroCorrecao" style="margin:0; flex-grow: 1;">
-                        <option value="">Selecione para corrigir...</option>
+                        <option value="">Selecione...</option>
                     </select>
                     <button id="btn-corrigir" class="btn btn-secondary"
-                        style="width: auto; margin:0; white-space: nowrap;">✏️ Ir</button>
+                        style="width: auto; margin:0; white-space: nowrap;">
+                        <i class="fa-solid fa-pencil"></i> Ir
+                    </button>
                 </div>
             </div>
 
@@ -182,18 +202,16 @@
                     <h2 id="wiz-nome" style="color: #E65100; margin:0;">Nome do Membro</h2>
                     <span style="font-size:0.8rem; color:#999;" id="contador-passo"></span>
                 </div>
-
                 <div class="grid-notas">
                     <div><small>01 Frequencia</small><input type="number" id="n1" placeholder="Max 30"></div>
                     <div><small>02 Devoção Matinal</small><input type="number" id="n2" placeholder="Max 40"></div>
                     <div><small>03 Uniforme</small><input type="number" id="n3" placeholder="Max 50"></div>
                     <div><small>04 Higiene</small><input type="number" id="n4" placeholder="Max 30"></div>
                     <div><small>05 Classe Biblica</small><input type="number" id="n5" placeholder="Max 50"></div>
-                    <div><small>06 Ano Bíblico.</small><input type="number" id="n6" placeholder="Max 40"></div>
+                    <div><small>06 Ano Bíblico</small><input type="number" id="n6" placeholder="Max 40"></div>
                     <div><small>07 Materiais</small><input type="number" id="n7" placeholder="Max 40"></div>
                     <div><small>08 Disciplina</small><input type="number" id="n8" placeholder="Max 40"></div>
                 </div>
-
                 <div style="display:flex; gap:10px; margin-top: 15px;">
                     <button id="btn-proximo" class="btn btn-primary">Salvar e Próximo ➡️</button>
                     <button onclick="fecharWizard()" class="btn btn-secondary"
@@ -203,8 +221,7 @@
         </div>
 
         <div id="sec-dashboard" class="hidden">
-            <div class="card" style="text-align: center; background: #fff3e0; border: 1px solid #ffe0b2;">
-                <h4 style="margin: 0 0 10px 0; color: #E65100;">📅 Filtrar Período</h4>
+            <div class="card" style="text-align: center; background: #fff3e0;">
                 <div class="grid-notas" style="margin-bottom: 0;">
                     <select id="dashMes" onchange="atualizarDashboard()">
                         <option>Janeiro</option>
@@ -228,18 +245,11 @@
                     </select>
                 </div>
             </div>
-
-            <div id="card-destaque" class="card"
-                style="text-align: center; background: #e3f2fd; border: 1px solid #bbdefb; display: none;">
+            <div id="card-destaque" class="card" style="text-align: center; background: #e3f2fd; display: none;">
                 <h3 style="color: #1565c0; margin: 0;">🌟 Destaque da Semana</h3>
-                <p style="font-size: 1.3rem; margin: 15px 0 5px 0;">
-                    <strong id="nome-destaque">---</strong>
-                </p>
-                <small style="color: #1565c0; font-weight: bold;">
-                    <span id="pontos-destaque">0</span> pontos
-                </small>
+                <p style="font-size: 1.3rem; margin: 15px 0 5px 0;"><strong id="nome-destaque">---</strong></p>
+                <small style="color: #1565c0; font-weight: bold;"><span id="pontos-destaque">0</span> pontos</small>
             </div>
-
             <div class="card">
                 <h3 style="text-align: center;">Desempenho Geral</h3>
                 <div class="chart-container">
@@ -247,7 +257,6 @@
                     <div class="legenda-grafico" id="legenda-geral"></div>
                 </div>
             </div>
-
             <div class="card">
                 <h3>Pontuações da Unidade</h3>
                 <div id="lista-dashboard">Carregando...</div>
@@ -266,10 +275,78 @@
             </div>
         </div>
 
+        <div id="modal-ficha" class="modal hidden" style="align-items: center; justify-content: center;">
+            <div class="modal-content" style="max-width: 500px; padding: 0; overflow: hidden;">
+                <div id="header-ficha" style="background: #E65100; color: white; padding: 15px; text-align: left;">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; opacity: 0.9;">Unidade:</div>
+                    <div id="ficha-unidade" style="font-size: 1.2rem; font-weight: bold;">---</div>
+                </div>
+
+                <div id="corpo-ficha" style="padding: 20px; text-align: left; font-size: 0.95rem; color: #333;">
+                    Carregando...
+                </div>
+
+                <div style="padding: 15px; text-align: right; background: #f9f9f9; border-top: 1px solid #eee;">
+                    <button onclick="document.getElementById('modal-ficha').classList.add('hidden')"
+                        class="btn btn-secondary" style="width: auto;">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-cadastro" class="modal hidden">
+            <div class="modal-content" style="max-width: 600px;">
+                <h3 style="color: #E65100; border-bottom: 2px solid #E65100; padding-bottom: 10px;">📋 Ficha de Cadastro
+                </h3>
+                <div class="grid-notas" style="grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+                    <div><label>Nome Completo:</label><input type="text" id="cad-nome"></div>
+                    <div><label>Nasc.:</label><input type="date" id="cad-nasc"></div>
+                    <div><label>Idade:</label><input type="number" id="cad-idade"></div>
+                </div>
+                <div class="grid-notas" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div><label>Mãe:</label><input type="text" id="cad-mae"></div>
+                    <div><label>Celular (Mãe):</label><input type="text" id="cad-tel-mae"></div>
+                </div>
+                <div class="grid-notas" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div><label>Pai:</label><input type="text" id="cad-pai"></div>
+                    <div><label>Celular (Pai):</label><input type="text" id="cad-tel-pai"></div>
+                </div>
+                <div class="grid-notas" style="gap: 10px;">
+                    <div style="grid-column: span 2;"><label>Endereço:</label><input type="text" id="cad-endereco">
+                    </div>
+                </div>
+                <div class="grid-notas" style="grid-template-columns: 1fr 2fr 2fr 1fr; gap: 10px;">
+                    <div><label>Nº:</label><input type="text" id="cad-numero"></div>
+                    <div><label>Bairro:</label><input type="text" id="cad-bairro"></div>
+                    <div><label>Cidade:</label><input type="text" id="cad-cidade"></div>
+                    <div><label>UF:</label><input type="text" id="cad-uf"></div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="salvarCadastroMembro()" class="btn btn-primary">💾 Salvar Ficha</button>
+                    <button onclick="fecharModalCadastro()" class="btn btn-danger">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
     </div>
+    <footer>
+        <div class="footer-links">
+            <a href="politica.html" target="_blank">Política de Privacidade</a>
+
+            <span style="opacity: 0.5;">•</span>
+
+            <a href="termos.html" target="_blank">Termos de Uso</a>
+        </div>
+
+        <p style="margin: 10px 0; font-size: 0.85rem; opacity: 0.9;">
+            © 2026 Clube Heróis da Fé. Todos os direitos reservados.
+        </p>
+
+        <p class="credits">
+            Desenvolvido com <i class="fa-solid fa-heart" style="color: #fff;"></i> por <strong>Daniel Quintela</strong>
+        </p>
+    </footer>
 
     <script type="module" src="script.js"></script>
-
 </body>
 
 </html>

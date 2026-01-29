@@ -24,13 +24,13 @@
 
 html {
     scroll-behavior: smooth;
-    /* Garante rolagem suave nas telas */
 }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    padding-bottom: 30px;
+    padding-bottom: 0px;
+    /* Aumentei um pouco para o scroll final */
 }
 
 /* --- CABEÇALHO --- */
@@ -42,6 +42,9 @@ header {
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
     margin-bottom: 25px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-content {
@@ -52,9 +55,27 @@ header {
     align-items: center;
 }
 
+/* Ajuste para o texto não ficar colado na imagem em telas pequenas */
+.header-content>div {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+/* --- ESTILO DO LOGO NO CABEÇALHO --- */
+.logo-header {
+    width: 60px;
+    /* Ajustei levemente para mobile */
+    height: auto;
+    object-fit: contain;
+    margin-right: 15px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
 h1 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 600;
+    line-height: 1.2;
 }
 
 small {
@@ -99,6 +120,12 @@ nav {
     margin-bottom: 20px;
     overflow-x: auto;
     padding-bottom: 5px;
+    /* Esconder barra de rolagem */
+    scrollbar-width: none;
+}
+
+nav::-webkit-scrollbar {
+    display: none;
 }
 
 nav button {
@@ -120,7 +147,7 @@ nav button.active {
     color: white;
     border-color: var(--primary-color);
     font-weight: 600;
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
 /* --- BOTÕES GERAIS --- */
@@ -132,7 +159,8 @@ nav button.active {
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
-    transition: transform 0.2s, opacity 0.2s;
+    transition: transform 0.2s, opacity 0.2s, background 0.2s;
+    margin-top: 5px;
 }
 
 .btn:active {
@@ -148,13 +176,21 @@ nav button.active {
 .btn-secondary {
     background: white;
     color: var(--primary-color);
-    border: 2px solid var(--primary-color);
-    /* Removido margin-top global para não quebrar o layout lateral */
+    border: 1px solid var(--primary-color);
 }
 
-/* Adiciona margem no botão secundário APENAS na tela de login */
-.form-login .btn-secondary {
-    margin-top: 10px;
+.btn-secondary:hover {
+    background-color: #fff3e0;
+}
+
+.btn-danger {
+    background: white;
+    color: #d32f2f;
+    border: 1px solid #d32f2f;
+}
+
+.btn-danger:hover {
+    background: #ffebee;
 }
 
 .btn-google {
@@ -165,12 +201,7 @@ nav button.active {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-top: 20px;
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
+    margin-top: 15px;
 }
 
 .btn-logout {
@@ -180,25 +211,10 @@ nav button.active {
     padding: 5px 15px;
     font-size: 0.8rem;
     backdrop-filter: blur(5px);
+    margin-top: 0;
 }
 
-.btn-danger {
-    background: transparent;
-    color: #333;
-    border: none;
-    padding: 5px 10px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.2s;
-}
-
-.btn-danger:hover {
-    background: #ffebee;
-    color: #d32f2f;
-}
-
-/* --- FORMULÁRIOS E INPUTS --- */
+/* --- FORMULÁRIOS --- */
 input,
 select,
 textarea {
@@ -213,15 +229,13 @@ textarea {
 }
 
 input:focus,
-select:focus,
-textarea:focus {
+select:focus {
     outline: none;
     border-color: var(--primary-color);
     background: white;
-    box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.1);
 }
 
-/* --- GRID DE NOTAS (AVALIAÇÃO) --- */
+/* --- GRID DE NOTAS --- */
 .grid-notas {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -248,7 +262,13 @@ textarea:focus {
     font-size: 0.8rem;
 }
 
-/* --- TABELA DE REGRAS (Visual Clean) --- */
+.grid-notas input {
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* --- TABELA DE REGRAS --- */
 .regras-box {
     background: #fff8e1;
     border: 1px solid #ffe0b2;
@@ -257,11 +277,15 @@ textarea:focus {
     margin-top: 20px;
 }
 
+.regras-box h4 {
+    margin-bottom: 10px;
+    color: #E65100;
+}
+
 .regras-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
-    margin-top: 10px;
 }
 
 @media(min-width: 600px) {
@@ -289,7 +313,7 @@ textarea:focus {
     color: #666;
 }
 
-/* --- PAINEL ADMIN (LOGS) 🕵️‍♂️ --- */
+/* --- LOGS E ADMIN --- */
 .log-item {
     background: white;
     padding: 15px;
@@ -297,49 +321,22 @@ textarea:focus {
     border-left: 4px solid #ccc;
     margin-bottom: 10px;
     border-radius: 0 8px 8px 0;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
 }
 
 .log-tipo-Login {
     border-left-color: #4CAF50;
 }
 
-/* Verde */
 .log-tipo-Avaliação {
     border-left-color: #2196F3;
 }
 
-/* Azul */
 .log-tipo-Exclusão {
     border-left-color: #f44336;
 }
 
-/* Vermelho */
 .log-tipo-Configuração {
     border-left-color: #FF9800;
-}
-
-/* Laranja */
-
-.log-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: #888;
-    margin-bottom: 5px;
-}
-
-.log-texto {
-    font-size: 0.95rem;
-    color: #444;
-    line-height: 1.4;
-}
-
-.log-email {
-    background: #f0f0f0;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 500;
 }
 
 /* --- GRÁFICOS --- */
@@ -383,7 +380,7 @@ textarea:focus {
     display: inline-block;
 }
 
-/* --- MODAL --- */
+/* --- MODAL PADRÃO --- */
 .modal {
     position: fixed;
     top: 0;
@@ -430,25 +427,128 @@ textarea:focus {
     margin: 0 10px;
 }
 
-/* --- ESTILO DO LOGO NO CABEÇALHO (LIMPO) --- */
-.logo-header {
-    width: 80px;
-    /* Tamanho fixo */
-    height: auto;
-    /* Altura se ajusta para não distorcer */
-    object-fit: contain;
-    /* Mantém a proporção do brasão */
-    margin-right: 15px;
-    /* Afasta do texto */
-
-    /* Sombra suave seguindo o contorno */
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+.toggle-text {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9rem;
 }
 
-/* Ajuste para o texto não ficar colado na imagem em telas pequenas */
-.header-content>div {
-    display: flex;
+.toggle-text a {
+    color: var(--primary-color);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+/* =========================================
+    FICHA DE CADASTRO
+   ========================================= */
+
+/* Ajuste específico para o Modal de Ficha ficar igual ao print */
+#modal-ficha .modal-content {
+    padding: 0;
+    /* Remove padding para o cabeçalho encostar nas bordas */
+    overflow: hidden;
+    /* Corta o que passar das bordas arredondadas */
+    border-radius: 12px;
+    max-width: 500px;
+}
+
+/* Cabeçalho Laranja da Ficha */
+#header-ficha {
+    background: linear-gradient(135deg, #E65100, #F57C00);
+    color: white;
+    padding: 15px 20px;
+    border-bottom: 2px solid #bf360c;
+}
+
+/* Corpo da Ficha (Texto) */
+#corpo-ficha {
+    padding: 25px;
+    color: #333;
+    line-height: 1.6;
+    background: #fff;
+    font-size: 0.95rem;
+}
+
+/* Ícones dentro da ficha */
+#corpo-ficha i {
+    width: 25px;
+    text-align: center;
+    margin-right: 5px;
+}
+
+/* Botões de Ação na Ficha (Editar/Excluir) */
+#corpo-ficha .btn {
+    width: auto;
+    /* Não ocupar a linha toda */
+    display: inline-flex;
     align-items: center;
-    flex-grow: 1;
-    /* Ocupa o espaço disponível */
+    gap: 8px;
+    margin-left: 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+#corpo-ficha .btn:hover {
+    background-color: #f5f5f5;
+    transform: translateY(-2px);
+}
+
+/* Login Card específico */
+.login-card {
+    text-align: center;
+    max-width: 400px;
+    margin: 40px auto;
+}
+
+/* =========================================
+   RODAPÉ (FOOTER) - ESTILO SISTEMA
+   ========================================= */
+
+footer {
+    /* Mesmo gradiente do cabeçalho para combinar */
+    background: linear-gradient(135deg, #E65100, #F57C00);
+    color: white;
+    /* Texto branco para dar contraste no laranja */
+    text-align: center;
+    padding: 30px 15px;
+    margin-top: 50px;
+
+    /* Um charme visual: bordas arredondadas em cima */
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+
+    box-shadow: 0 -4px 10px rgba(230, 81, 0, 0.1);
+}
+
+.footer-links {
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.footer-links a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    transition: opacity 0.2s;
+    font-size: 0.9rem;
+}
+
+.footer-links a:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+.credits {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.credits strong {
+    font-weight: 700;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
 }
