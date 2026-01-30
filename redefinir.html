@@ -4,66 +4,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redefinir Senha - Controle DBV</title>
+    <title>Redefinir Senha - Heróis da Fé</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
 
-    <header>
+    <header style="justify-content: center; text-align: center;">
         <div class="header-content" style="justify-content: center;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <img src="logo.png" alt="Brasão" class="logo-header">
-                <div>
-                    <h1 style="margin: 0;">Controle de Unidade</h1>
-                    <small>Recuperação de Acesso</small>
-                </div>
+                <h1 style="margin: 0;">Heróis da Fé</h1>
             </div>
         </div>
     </header>
 
-    <div class="container">
-        <div class="card login-card" style="max-width: 500px; margin: 50px auto;">
+    <div class="container" style="margin-top: 50px;">
+        <div class="card login-card" style="max-width: 400px; margin: 0 auto;">
+            <h2 style="color: #E65100; margin-bottom: 10px;">Nova Senha</h2>
+            <p style="color: #666; margin-bottom: 20px;">Digite sua nova senha abaixo.</p>
 
-            <div id="loading-box" style="text-align: center;">
-                <h3>🔄 Verificando...</h3>
-                <p>Aguarde enquanto validamos seu link.</p>
+            <div class="form-login">
+                <div style="position: relative; margin-bottom: 15px;">
+                    <input type="password" id="nova-senha" placeholder="🔒 Nova Senha" style="padding-right: 45px;">
+                    <i id="olho-senha" class="fa-solid fa-eye-slash" onclick="toggleSenha()"
+                        style="position: absolute; right: 15px; top: 30%; cursor: pointer; color: #666;"
+                        title="Ver Senha"></i>
+                </div>
+
+                <button id="btn-salvar-senha" class="btn btn-primary">💾 Salvar Nova Senha</button>
             </div>
 
-            <div id="reset-box" class="hidden">
-                <h2 style="color: #E65100; text-align: center;">Nova Senha</h2>
-                <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                    Digite sua nova senha abaixo para recuperar o acesso.
-                </p>
-
-                <input type="password" id="new-password" placeholder="🔒 Nova Senha (mín. 6 caracteres)">
-                <button id="btn-save-pass" class="btn btn-primary">💾 Salvar Nova Senha</button>
-            </div>
-
-            <div id="success-box" class="hidden" style="text-align: center;">
-                <h2 style="color: #4CAF50;">✅ Sucesso!</h2>
-                <p>Sua senha foi alterada.</p>
-                <a href="index.html" class="btn btn-primary"
-                    style="text-decoration: none; display: inline-block; margin-top: 10px;">
-                    Voltar para o Login
-                </a>
-            </div>
-
-            <div id="error-box" class="hidden" style="text-align: center;">
-                <h2 style="color: #f44336;">❌ Link Inválido</h2>
-                <p id="error-msg">Este link já foi usado ou expirou.</p>
-                <a href="index.html" class="btn btn-secondary" style="text-decoration: none; display: inline-block;">
-                    Voltar
-                </a>
-            </div>
-
+            <p style="margin-top: 20px;">
+                <a href="index.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Voltar ao
+                    Login</a>
+            </p>
         </div>
     </div>
 
+    <footer>
+        <p style="opacity: 0.8; font-size: 0.8rem;">Sistema de Controle de Unidade</p>
+    </footer>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, confirmPasswordReset, verifyPasswordResetCode } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // SUA CONFIGURAÇÃO (A MESMA DO SCRIPT.JS)
         const firebaseConfig = {
             apiKey: "AIzaSyAuorMQnlj-SCwFsPOEBKnqj2im6VVLcHk",
             authDomain: "controle-de-unidade.firebaseapp.com",
@@ -76,50 +66,52 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // Pega o código secreto da URL (que vem do email)
+        // PEGAR O CÓDIGO MÁGICO DA URL (OOBCODE)
         const urlParams = new URLSearchParams(window.location.search);
         const oobCode = urlParams.get('oobCode');
-        const mode = urlParams.get('mode');
 
-        const boxLoading = document.getElementById('loading-box');
-        const boxReset = document.getElementById('reset-box');
-        const boxSuccess = document.getElementById('success-box');
-        const boxError = document.getElementById('error-box');
-
-        if (!oobCode || mode !== 'resetPassword') {
-            mostrarErro("Link inválido ou incompleto.");
-        } else {
-            // Verifica se o código é válido
-            verifyPasswordResetCode(auth, oobCode)
-                .then(email => {
-                    // Código válido! Mostra o formulário
-                    boxLoading.classList.add('hidden');
-                    boxReset.classList.remove('hidden');
-                })
-                .catch(error => {
-                    mostrarErro(error.message);
-                });
+        // FUNÇÃO DE MOSTRAR SENHA
+        window.toggleSenha = function () {
+            const input = document.getElementById('nova-senha');
+            const olho = document.getElementById('olho-senha');
+            if (input.type === "password") {
+                input.type = "text";
+                olho.classList.replace('fa-eye-slash', 'fa-eye');
+            } else {
+                input.type = "password";
+                olho.classList.replace('fa-eye', 'fa-eye-slash');
+            }
         }
 
-        document.getElementById('btn-save-pass').addEventListener('click', () => {
-            const newPass = document.getElementById('new-password').value;
-            if (newPass.length < 6) return alert("A senha deve ter pelo menos 6 caracteres.");
+        // SALVAR A SENHA
+        document.getElementById('btn-salvar-senha').addEventListener('click', () => {
+            const newPassword = document.getElementById('nova-senha').value;
 
-            confirmPasswordReset(auth, oobCode, newPass)
+            if (!newPassword || newPassword.length < 6) {
+                return Swal.fire('Erro', 'A senha deve ter pelo menos 6 caracteres.', 'warning');
+            }
+
+            if (!oobCode) {
+                return Swal.fire('Erro', 'Link inválido ou expirado. Peça para redefinir novamente.', 'error');
+            }
+
+            // COMANDO DO FIREBASE PARA TROCAR A SENHA
+            confirmPasswordReset(auth, oobCode, newPassword)
                 .then(() => {
-                    boxReset.classList.add('hidden');
-                    boxSuccess.classList.remove('hidden');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Senha Alterada!',
+                        text: 'Agora você pode fazer login com a nova senha.',
+                        confirmButtonColor: '#E65100'
+                    }).then(() => {
+                        window.location.href = "index.html"; // Manda de volta pro login
+                    });
                 })
-                .catch(error => {
-                    alert("Erro ao salvar: " + error.message);
+                .catch((error) => {
+                    console.error(error);
+                    Swal.fire('Erro', 'Link expirado ou inválido. Tente pedir a redefinição de novo.', 'error');
                 });
         });
-
-        function mostrarErro(msg) {
-            boxLoading.classList.add('hidden');
-            boxError.classList.remove('hidden');
-            document.getElementById('error-msg').innerText = "O link expirou ou já foi usado.";
-        }
     </script>
 </body>
 

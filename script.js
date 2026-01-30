@@ -143,7 +143,7 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 // --- LISTA DE ADMINS ---
 const ADMINS = [
     "V7FUkGG035dQiBo5FoB3DVYF14N2", // Daniel
-    "U6Oi4O5scdY70e43bLMGJZf82m1"  // Sérgio
+    "U6Oi4O5scdY70e43bLMGJZf82m1"   // Sérgio
 ];
 
 onAuthStateChanged(auth, (user) => {
@@ -305,36 +305,18 @@ window.deletarFicha = async (id, nome) => {
     if (result.isConfirmed) {
         try {
             await deleteDoc(doc(db, "membros_detalhados", id));
-
-            // Remove da lista do conselheiro (busca o dono da ficha original)
-            const fichaSnap = await getDoc(doc(db, "membros_detalhados", id)); // Tentativa de busca segura
-            // Mas como acabamos de deletar, usamos a query reversa ou assumimos o userAtual se for admin
-            // Melhor: Buscar todos os conselheiros e limpar (mais pesado) ou simplificar:
-
-            // Busca configs onde o membro existe
-            // NOTA: Como admin deleta de qualquer um, precisamos saber quem é o conselheiro.
-            // Para simplificar, vou assumir que a ficha foi deletada. 
-            // A atualização da lista 'configuracoes' é mais complexa via Admin sem saber o UID do dono.
-            // Solução rápida: O Admin apaga a ficha detalhada. O nome pode ficar na lista do conselheiro até ele remover, 
-            // OU o Admin precisa saber o UID do conselheiro.
-            // Vou focar em apagar a FICHA DETALHADA, que é o principal.
-
             registrarLog("Exclusão Admin", `Admin removeu: ${nome}`);
             Swal.fire('Pronto', 'Membro removido com sucesso.', 'success');
 
             document.getElementById('modal-ficha').classList.add('hidden');
 
-            // SE TIVER NO ADMIN, ATUALIZA A LISTA ADMIN
             if (!document.getElementById('sec-admin').classList.contains('hidden')) {
                 carregarFichasGeral();
             }
-            // SE TIVER NA CONFIG, ATUALIZA A LISTA CONFIG
             if (!document.getElementById('sec-config').classList.contains('hidden')) {
                 carregarConfiguracao();
             }
-
         } catch (e) {
-            // Mesmo com erro (ex: ficha já apagada), força atualização visual
             if (!document.getElementById('sec-admin').classList.contains('hidden')) {
                 carregarFichasGeral();
             }
@@ -391,7 +373,9 @@ window.salvarCadastroMembro = async () => {
             registrarLog("Edição", `Editou: ${nome}`);
             Swal.fire('Atualizado!', 'Ficha alterada.', 'success');
         } else {
+            // 👇 A CORREÇÃO ESTÁ AQUI (Adicionei o parênteses que faltava no 'collection')
             await addDoc(collection(db, "membros_detalhados"), ficha);
+
             if (!listaMembros.includes(nome)) {
                 listaMembros.push(nome);
                 await setDoc(docConfigRef, {
@@ -405,7 +389,6 @@ window.salvarCadastroMembro = async () => {
 
         fecharModalCadastro();
 
-        // ATUALIZA A TELA CERTA (ADMIN OU CONFIG)
         if (!document.getElementById('sec-admin').classList.contains('hidden')) {
             carregarFichasGeral();
         } else {
@@ -465,7 +448,6 @@ window.carregarLogs = async () => {
     });
 }
 
-// 👇 AQUI A MUDANÇA: LISTA DO ADMIN COM BOTÕES DE AÇÃO 👇
 window.carregarFichasGeral = async () => {
     const div = document.getElementById('lista-fichas-global');
     div.innerHTML = "<p>Buscando fichas...</p>";
@@ -484,7 +466,6 @@ window.carregarFichasGeral = async () => {
                 html += `<h4 style="background:#E65100; color:white; padding:5px; margin-top:15px;">🛡️ Unidade: ${unidadeAtual}</h4>`;
             }
 
-            // CARTÃO COMPLETO NO ADMIN
             html += `
             <div style="background:white; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:5px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -663,3 +644,47 @@ document.getElementById('nav-config').onclick = () => navegar('config');
 document.getElementById('nav-avaliar').onclick = () => navegar('avaliar');
 document.getElementById('nav-dashboard').onclick = () => navegar('dashboard');
 document.getElementById('nav-admin').onclick = () => navegar('admin');
+
+
+// =========================================
+// RECUPERAÇÃO DE SENHA (ESQUECI MINHA SENHA)
+// =========================================
+const btnEsqueci = document.getElementById('btn-esqueci-senha');
+
+if (btnEsqueci) {
+    btnEsqueci.addEventListener('click', (e) => {
+        e.preventDefault(); // Evita que a tela pule pro topo
+
+        const email = document.getElementById('email-input').value;
+
+        if (!email) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Digite seu e-mail!',
+                text: 'Preencha o campo de e-mail acima antes de clicar em "Esqueci minha senha".'
+            });
+            return;
+        }
+
+        sendPasswordResetEmail(auth, email)
+            .then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'E-mail Enviado!',
+                    text: 'Verifique sua caixa de entrada (e o Spam) para criar uma nova senha.'
+                });
+            })
+            .catch((error) => {
+                console.error("Erro ao recuperar senha:", error);
+                let msg = "Erro ao enviar e-mail.";
+                if (error.code === 'auth/user-not-found') msg = "E-mail não cadastrado.";
+                if (error.code === 'auth/invalid-email') msg = "E-mail inválido.";
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: msg
+                });
+            });
+    });
+}
