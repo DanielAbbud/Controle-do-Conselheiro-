@@ -1,4 +1,4 @@
-const CACHE_NAME = "dbv-app-v1";
+const CACHE_NAME = "dbv-app-v2";
 const urlsToCache = [
     "./",
     "./index.html",
