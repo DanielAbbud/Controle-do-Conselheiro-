@@ -1,8 +1,15 @@
 # 🛡️ Sistema de Controle de Unidade - Clube Heróis da Fé
 
-Sistema web desenvolvido para gestão e avaliação semanal das unidades de Desbravadores. O foco é eliminar o papel, automatizar a somatória de pontos e garantir segurança e auditoria para a liderança.
+Sistema web e **PWA (Progressive Web App)** desenvolvido para gestão e avaliação semanal das unidades de Desbravadores. O foco é eliminar o papel, automatizar a somatória de pontos e garantir segurança e auditoria para a liderança.
 
 ## 🚀 Funcionalidades Principais
+
+
+### 1. 📱 Experiência de Aplicativo (NOVO!)
+* **Instalável:** Funciona como um aplicativo nativo no Android e iOS (iPhone).
+* **Sem Download:** Não ocupa espaço da loja de aplicativos (Play Store/App Store).
+* **Imersivo:** Roda em tela cheia, sem barra de navegação do browser.
+* **Ícone na Tela Inicial:** Acesso rápido direto pelo brasão do clube.
 
 ### 1. 🔐 Autenticação e Segurança
 * **Login Seguro:** Acesso via E-mail/Senha ou Conta Google.
@@ -53,6 +60,23 @@ Sistema web desenvolvido para gestão e avaliação semanal das unidades de Desb
 * **JavaScript (ES6+):** Lógica avançada de avaliação e manipulação do DOM.
 * **Firebase Authentication:** Gestão de usuários e segurança.
 * **Firebase Firestore:** Banco de dados NoSQL em tempo real na nuvem.
+
+---
+
+## 📲 Como Instalar no Celular
+
+O sistema utiliza tecnologia PWA. Siga os passos abaixo para instalar:
+
+### 🤖 No Android (Chrome)
+1. Acesse o link do sistema.
+2. Toque na barra inferior **"Adicionar à tela inicial"** ou no menu (3 pontinhos) > **"Instalar aplicativo"**.
+3. O ícone aparecerá na sua grade de apps.
+
+### 🍎 No iPhone (iOS - Safari)
+1. Acesse o link do sistema pelo Safari.
+2. Toque no botão **Compartilhar** (quadrado com seta para cima).
+3. Role para baixo e toque em **"Adicionar à Tela de Início"**.
+4. Confirme clicando em "Adicionar".
 
 ---
 
