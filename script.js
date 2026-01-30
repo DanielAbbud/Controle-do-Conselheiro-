@@ -511,24 +511,52 @@ function abrirWizard() {
     document.getElementById('contador-passo').innerText = `${wizardIndex + 1}/${dadosUnidade.membros.length}`;
     for (let i = 1; i <= 8; i++) document.getElementById('n' + i).value = '';
 }
+// --- 1. SUBSTITUA O BLOCO DO BOTÃO PRÓXIMO POR ESTE ---
 document.getElementById('btn-proximo').addEventListener('click', async () => {
+    // Verificação de Segurança: Obriga a ter unidade configurada
+    if (!dadosUnidade.unidade) {
+        return Swal.fire('Erro', 'Configure o nome da Unidade na aba Config antes de avaliar!', 'error');
+    }
+
     const nome = dadosUnidade.membros[wizardIndex];
     const mes = document.getElementById('selMes').value;
     const semana = document.getElementById('selSemana').value;
+
     let notas = [], total = 0;
     for (let i = 1; i <= 8; i++) {
         let v = Number(document.getElementById('n' + i).value) || 0;
         notas.push(v); total += v;
     }
-    const id = `${userAtual.uid}_${nome.replace(/\s+/g, '')}_${mes}_${semana}`;
+
+    // --- A MÁGICA ACONTECE AQUI ---
+    // Cria um ID baseado na UNIDADE (ex: JAGUAR_JOAO...). 
+    // Assim, se o Adjunto avaliar a mesma unidade, o ID é o mesmo.
+    const unidadeSafe = dadosUnidade.unidade.trim().toUpperCase().replace(/\s+/g, '_');
+    const id = `${unidadeSafe}_${nome.replace(/\s+/g, '')}_${mes}_${semana}`;
+
     try {
-        await setDoc(doc(db, "avaliacoes", id), { uid: userAtual.uid, nome, mes, semana, notas, total, data: new Date().toISOString() });
+        await setDoc(doc(db, "avaliacoes", id), {
+            unidade: dadosUnidade.unidade,     // Importante para o filtro
+            autor_uid: userAtual.uid,          // Quem fez a avaliação (Audit)
+            autor_nome: userAtual.displayName, // Nome de quem fez
+            nome, mes, semana, notas, total,
+            data: new Date().toISOString()
+        });
+
         Toast.fire({ icon: 'success', title: 'Nota Salva!' });
-        avaliacoesCache = [];
+        avaliacoesCache = []; // Limpa o cache para recarregar
+
         wizardIndex++;
         if (wizardIndex < dadosUnidade.membros.length) abrirWizard();
-        else { Swal.fire('Fim', 'Avaliações concluídas', 'success'); fecharWizard(); navegar('dashboard'); }
-    } catch (e) { Swal.fire('Erro', e.message, 'error'); }
+        else {
+            Swal.fire('Fim', 'Avaliações concluídas!', 'success');
+            fecharWizard();
+            navegar('dashboard');
+        }
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Erro', e.message, 'error');
+    }
 });
 window.fecharWizard = () => document.getElementById('wizard-form').classList.add('hidden');
 
@@ -536,18 +564,50 @@ window.fecharWizard = () => document.getElementById('wizard-form').classList.add
 window.atualizarDashboard = async () => {
     const div = document.getElementById('lista-dashboard');
     div.innerHTML = "Carregando...";
+
     const mes = document.getElementById('dashMes').value;
     const semana = document.getElementById('dashSemana').value;
-    if (avaliacoesCache.length === 0) {
-        const snap = await getDocs(query(collection(db, "avaliacoes"), where("uid", "==", userAtual.uid)));
-        snap.forEach(d => { let x = d.data(); x.id = d.id; avaliacoesCache.push(x); });
+
+    // Se não tiver unidade configurada, não busca nada
+    if (!dadosUnidade.unidade) {
+        div.innerHTML = "<p style='padding:20px; text-align:center'>Configure o nome da unidade na aba Config.</p>";
+        return;
     }
+
+    // Busca no banco (agora filtrando pela UNIDADE e não pelo usuário)
+    if (avaliacoesCache.length === 0) {
+        try {
+            // AQUI É O PULO DO GATO: Filtra pela UNIDADE
+            const q = query(collection(db, "avaliacoes"), where("unidade", "==", dadosUnidade.unidade));
+            const snap = await getDocs(q);
+            avaliacoesCache = [];
+            snap.forEach(d => {
+                let x = d.data();
+                x.id = d.id;
+                avaliacoesCache.push(x);
+            });
+        } catch (e) {
+            console.error("Erro dashboard:", e);
+        }
+    }
+
     const filt = avaliacoesCache.filter(d => d.mes === mes && d.semana === semana);
-    if (filt.length === 0) { div.innerHTML = "Sem dados"; return; }
+
+    if (filt.length === 0) { div.innerHTML = "<div style='padding:20px; text-align:center; color:#888'>Sem dados para este período.</div>"; return; }
+
     let html = "<ul style='list-style:none;padding:0'>";
     let totalG = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    // Ordena do maior para o menor
     filt.sort((a, b) => b.total - a.total).forEach(d => {
-        html += `<li onclick="abrirDetalhes('${d.nome}')" style="background:#f9f9f9;padding:10px;margin-bottom:5px;display:flex;justify-content:space-between;cursor:pointer;"><span>👤 ${d.nome}</span><strong>${d.total}</strong></li>`;
+        // Mostra quem avaliou no detalhe
+        html += `<li onclick="abrirDetalhes('${d.nome}')" style="background:#f9f9f9;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;cursor:pointer;border-radius:6px;border-left:4px solid #E65100;">
+            <span>
+                <div style="font-weight:bold">👤 ${d.nome}</div>
+                <div style="font-size:0.75rem; color:#888;">Avaliado por: ${d.autor_nome || 'Conselheiro'}</div>
+            </span>
+            <strong style="font-size:1.1rem; color:#E65100">${d.total}</strong>
+        </li>`;
         d.notas.forEach((n, i) => totalG[i] += n);
     });
     div.innerHTML = html + "</ul>";
@@ -556,7 +616,10 @@ window.atualizarDashboard = async () => {
         document.getElementById('card-destaque').style.display = 'block';
         document.getElementById('nome-destaque').innerText = filt[0].nome;
         document.getElementById('pontos-destaque').innerText = filt[0].total + " pts";
+    } else {
+        document.getElementById('card-destaque').style.display = 'none';
     }
+
     graficoPizza(totalG, 'grafico-geral', 'legenda-geral');
 }
 
