@@ -1,4 +1,4 @@
-const CACHE_NAME = "dbv-app-v1"; // <--- Mudei para "v1" para indicar uma nova versão do cache
+const CACHE_NAME = "dbv-app-v2"; // <--- Mude para "v2" para indicar uma nova versão do cache
 const urlsToCache = [
     "./",
     "./index.html",

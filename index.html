@@ -41,6 +41,18 @@
 
             <div class="form-login">
                 <input type="text" id="nome-input" placeholder="👤 Como quer ser chamado?" class="hidden">
+
+                <select id="reg-unidade" class="hidden"
+                    style="background-color: #fff3e0; border: 1px solid #E65100; color: #E65100; font-weight: bold;">
+                    <option value="" disabled selected>🛡️ Selecione sua Unidade...</option>
+                    <option value="THIAGO WHITE">THIAGO WHITE</option>
+                    <option value="ELLEN WHITE">ELLEN WHITE</option>
+                    <option value="JOSEPH BATES">JOSEPH BATES</option>
+                    <option value="RAINHA ESTER">RAINHA ESTER</option>
+                    <option value="RACHEL OAKES">RACHEL OAKES</option>
+                    <option value="GUILHERME MILLER">GUILHERME MILLER</option>
+                    <option value="DIREÇÃO">DIREÇÃO</option>
+                </select>
                 <input type="email" id="email-input" placeholder="📧 Seu email">
                 <div style="position: relative;">
                     <input type="password" id="senha-input" placeholder="🔒 Sua senha" style="padding-right: 45px;">
@@ -71,7 +83,29 @@
         </div>
     </div>
 
-    <div id="app-principal" class="container">
+    <div id="modal-setup-inicial" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="color: #E65100;">🛡️ Escolha sua Unidade</h3>
+            <p>Identificamos que é seu primeiro acesso. Para continuar, selecione a unidade que você lidera.</p>
+            <p style="font-size: 0.8rem; color: red;">⚠️ Atenção: Essa escolha é definitiva.</p>
+
+            <select id="google-unidade-select" style="margin-top: 15px; font-weight: bold;">
+                <option value="" disabled selected>Selecione...</option>
+                <option value="THIAGO WHITE">THIAGO WHITE</option>
+                <option value="ELLEN WHITE">ELLEN WHITE</option>
+                <option value="JOSEHP BATES">JOSEHP BATES</option>
+                <option value="RAINHA ESTER">RAINHA ESTER</option>
+                <option value="RACHEL OAKES">RACHEL OAKES</option>
+                <option value="GUILHERME MILLER">GUILHERME MILLER</option>
+                <option value="DIREÇÃO">DIREÇÃO</option>
+            </select>
+
+            <button onclick="salvarUnidadeGoogle()" class="btn btn-primary" style="margin-top: 10px;">
+                Confirmar e Entrar 🚀
+            </button>
+        </div>
+    </div>
+    <div id="app-principal" class="container hidden">
         <nav>
             <button id="nav-avaliar" class="active">📝 Avaliar</button>
             <button id="nav-dashboard">📊 Painel</button>
@@ -85,8 +119,16 @@
             <label>👤 Nome do Conselheiro:</label>
             <input type="text" id="cfgNomeConselheiro" placeholder="Ex: Daniel Abbud">
 
-            <label>🛡️ Nome da Unidade:</label>
-            <input type="text" id="cfgUnidade" placeholder="Ex: Jaguar">
+            <label>🛡️ Sua Unidade (Vinculada):</label>
+            <input type="text" id="cfgUnidade" placeholder="Carregando..." disabled
+                style="background-color: #eee; color: #555; cursor: not-allowed; font-weight: bold;">
+
+            <button onclick="salvarConfiguracao()" class="btn-salvar btn btn-secondary" style="margin-bottom: 10px;">💾
+                Salvar Nome</button>
+
+            <button onclick="importarMembros()" class="btn btn-primary" style="width: 100%; margin: 0;">
+                🔄 Forçar Sincronia
+            </button>
 
             <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -101,9 +143,6 @@
                     <li style="text-align: center; color: #999; padding: 10px;">Carregando...</li>
                 </ul>
             </div>
-
-            <button id="btn-salvar-config" class="btn btn-secondary" style="margin-top: 20px;">💾 Salvar
-                Alterações</button>
         </div>
 
         <div id="sec-admin" class="card hidden">
@@ -252,12 +291,25 @@
                         <option>Semana 4</option>
                     </select>
                 </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="verRelatorioMensal()" class="btn btn-secondary"
+                        style="font-size: 0.85rem; width: auto; padding: 8px 15px;">
+                        📊 Fechar Mês
+                    </button>
+                    <button id="btnRankingAnual" onclick="verRankingAnual()" class="btn btn-primary"
+                        style="display: none; font-size: 0.85rem; width: auto; padding: 8px 15px; background: gold; color: #333; border: 1px solid #d4af37; box-shadow: 0 4px 6px rgba(212, 175, 55, 0.4);">
+                        🏆 Ranking Anual (Excelência)
+                    </button>
+                </div>
             </div>
+
             <div id="card-destaque" class="card" style="text-align: center; background: #e3f2fd; display: none;">
                 <h3 style="color: #1565c0; margin: 0;">🌟 Destaque da Semana</h3>
                 <p style="font-size: 1.3rem; margin: 15px 0 5px 0;"><strong id="nome-destaque">---</strong></p>
                 <small style="color: #1565c0; font-weight: bold;"><span id="pontos-destaque">0</span> pontos</small>
             </div>
+
             <div class="card">
                 <h3 style="text-align: center;">Desempenho Geral</h3>
                 <div class="chart-container">
@@ -265,6 +317,7 @@
                     <div class="legenda-grafico" id="legenda-geral"></div>
                 </div>
             </div>
+
             <div class="card">
                 <h3>Pontuações da Unidade</h3>
                 <div id="lista-dashboard">Carregando...</div>
@@ -354,16 +407,17 @@
         </p>
     </footer>
 
+    <script type="module" src="script.js"></script>
+
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('App PWA registrado com sucesso!', reg))
+                    .then(reg => console.log('PWA registrado com sucesso!', reg))
                     .catch(err => console.log('Erro ao registrar PWA:', err));
             });
         }
     </script>
-    <script type="module" src="script.js"></script>
 
 </body>
 

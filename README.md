@@ -1,95 +1,78 @@
-# 🛡️ Sistema de Controle de Unidade - Clube Heróis da Fé
+# 🛡️ Sistema de Controle de Unidade - Clube Heróis da Fé (V2.0)
 
-Sistema web e **PWA (Progressive Web App)** desenvolvido para gestão e avaliação semanal das unidades de Desbravadores. O foco é eliminar o papel, automatizar a somatória de pontos e garantir segurança e auditoria para a liderança.
+Sistema web e **PWA (Progressive Web App)** desenvolvido para gestão e avaliação semanal das unidades de Desbravadores. O foco é eliminar o papel, automatizar a somatória de pontos e garantir segurança total e auditoria para a liderança.
+
+> **Versão Atual:** 2.0 (Blindada & Otimizada)
 
 ## 🚀 Funcionalidades Principais
 
-
-### 1. 📱 Experiência de Aplicativo (NOVO!)
+### 1. 📱 Experiência de Aplicativo
 * **Instalável:** Funciona como um aplicativo nativo no Android e iOS (iPhone).
-* **Sem Download:** Não ocupa espaço da loja de aplicativos (Play Store/App Store).
-* **Imersivo:** Roda em tela cheia, sem barra de navegação do browser.
+* **Sem Download:** Não ocupa espaço da loja de aplicativos.
+* **Imersivo:** Roda em tela cheia, sem barra de navegação.
 * **Ícone na Tela Inicial:** Acesso rápido direto pelo brasão do clube.
 
-### 1. 🔐 Autenticação e Segurança
-* **Login Seguro:** Acesso via E-mail/Senha ou Conta Google.
-* **Recuperação de Senha:** Sistema automático de "Esqueci minha senha" via e-mail.
-* **Persistência:** O usuário permanece logado mesmo fechando o navegador.
-* **Proteção de Rotas:** Ninguém acessa o painel sem estar logado.
+### 2. 🔐 Autenticação e Segurança (Blindada)
+* **Vínculo Obrigatório:** O sistema obriga a seleção da Unidade no momento do cadastro.
+* **Modal Google Inteligente:** Se o usuário entrar com Google pela primeira vez, uma janela bloqueia o acesso até que ele selecione sua unidade.
+* **Trava de Segurança:** Após definida, a Unidade não pode ser alterada manualmente pelo Conselheiro, evitando erros ou trocas acidentais.
+* **Login Seguro:** Acesso via E-mail/Senha ou Conta Google com persistência de sessão.
 
-### 2. 📝 Sistema de Avaliação (Híbrido)
-* **Critérios DBV:** Pontuação automática baseada em 8 requisitos:
-    1.  Frequência (30 pts)
-    2.  Devoção Matinal (40 pts)
-    3.  Uniforme (50 pts)
-    4.  Higiene (30 pts)
-    5.  Classe Bíblica (50 pts)
-    6.  Ano Bíblico (40 pts)
-    7.  Materiais (40 pts)
-    8.  Disciplina (40 pts)
-* **Modo Sequência:** Avalie todos os membros da unidade um por um (ideal para reuniões).
-* **Modo Correção:** Selecione um membro específico para ajustar uma nota ou avaliar tardiamente.
-* **Validação:** O sistema avisa se você tentar sobrescrever uma nota já existente.
+### 3. 📝 Sistema de Avaliação
+* **Critérios Oficiais:** Pontuação automática baseada nos 8 requisitos do cartão (Frequência, Uniforme, Ano Bíblico, etc.).
+* **Fluxo Rápido (Wizard):** Avalie todos os membros em sequência ("Próximo", "Próximo") sem sair da tela.
+* **Proteção contra Duplicidade:** O sistema avisa se você tentar avaliar o mesmo membro, na mesma semana, duas vezes.
+* **Modo Correção:** Permite editar uma nota específica caso tenha havido erro.
 
-### 3. 📊 Dashboard e Resultados
-* **Destaque da Semana:** Mostra automaticamente quem fez mais pontos no período.
-* **Gráficos Visuais:** Gráfico de pizza colorido mostrando a distribuição de pontos da unidade.
-* **Filtros Inteligentes:** Visualize o histórico por Mês e Semana.
-* **Histórico Individual:** Detalhes completos de cada membro com opção de exclusão.
+### 4. 📊 Dashboard e Relatórios de Excelência
+* **Destaque da Semana:** Exibe o campeão da semana atual no topo do painel.
+* **Botão "Fechar Mês":** Calcula automaticamente a somatória das 4 semanas e gera o ranking mensal (Ouro, Prata, Bronze).
+* **🏆 Ranking Anual Inteligente:** Botão especial que **só aparece em Dezembro**. Ele varre todo o histórico do ano para revelar o Desbravador Excelência.
+* **Gráficos:** Visualização em pizza da distribuição de pontos da unidade.
 
-### 4. ⚙️ Configuração Personalizada
-* **Identidade do Conselheiro:** O sistema salva e exibe o "Nome Fantasia" (Apelido) do conselheiro.
-* **Gestão da Unidade:** Cadastro fácil do nome da Unidade e lista de membros.
-* **Atualização em Tempo Real:** Alterações na configuração refletem na hora na avaliação.
+### 5. 🗂️ Gestão de Membros e Fichas
+* **Ficha Cadastral Completa:** Cadastro detalhado com: Nome, Data de Nascimento, Idade, Nome dos Pais, Telefones e Endereço completo.
+* **Sincronia de Equipe:** Botão "Forçar Sincronia" permite que Conselheiro e Associado vejam a mesma lista de membros em tempo real.
+* **Edição Fácil:** Altere dados da ficha ou exclua membros (com confirmação de segurança).
 
-### 5. 👮 Painel Administrativo 
-* **Log de Auditoria Total:** Registra ações críticas do sistema:
-    * Entradas e Saídas (Login/Logout).
-    * Criação de novas contas.
-    * Avaliações realizadas ou alteradas.
-    * Exclusão de notas.
-    * Erros de senha (tentativas de invasão).
-* **Espião de Dispositivo:** Identifica se a ação foi feita via Android, iPhone ou Computador.
-* **Máquina do Tempo:** Filtro de data para verificar o histórico de dias passados.
+### 6. 👮 Painel Administrativo (Diretoria)
+* **Logs de Auditoria Turbinados:**
+    * Registra: *Quem fez* + *Email de contato* + *Qual Unidade pertence*.
+    * Exemplo: `Daniel (email@gmail.com) | Und: THIAGO WHITE`.
+* **Correção de "Delay":** Sistema aguarda o carregamento dos dados para garantir que nenhum log fique "Sem Unidade".
+* **Espião de Dispositivo:** Identifica se o acesso foi via Celular (Android/iPhone) ou PC.
+* **Gestão Global:** O Admin pode visualizar e gerenciar as fichas de todas as unidades.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **HTML5 & CSS3:** Design responsivo (funciona em Celular e PC) e moderno.
-* **JavaScript (ES6+):** Lógica avançada de avaliação e manipulação do DOM.
-* **Firebase Authentication:** Gestão de usuários e segurança.
-* **Firebase Firestore:** Banco de dados NoSQL em tempo real na nuvem.
+* **HTML5 & CSS3:** Design responsivo e adaptado para mobile (Mobile-First).
+* **JavaScript (ES6+):** Lógica de "Wizard", validações assíncronas e manipulação de DOM.
+* **Firebase Authentication:** Gestão de usuários.
+* **Firebase Firestore:** Banco de dados NoSQL em tempo real.
+* **SweetAlert2:** Alertas e modais bonitos e interativos.
 
 ---
 
 ## 📲 Como Instalar no Celular
 
-O sistema utiliza tecnologia PWA. Siga os passos abaixo para instalar:
+O sistema utiliza tecnologia PWA. Siga os passos abaixo:
 
 ### 🤖 No Android (Chrome)
 1. Acesse o link do sistema.
-2. Toque na barra inferior **"Adicionar à tela inicial"** ou no menu (3 pontinhos) > **"Instalar aplicativo"**.
-3. O ícone aparecerá na sua grade de apps.
+2. Toque no menu (3 pontinhos) > **"Instalar aplicativo"** ou **"Adicionar à tela inicial"**.
 
 ### 🍎 No iPhone (iOS - Safari)
-1. Acesse o link do sistema pelo Safari.
-2. Toque no botão **Compartilhar** (quadrado com seta para cima).
-3. Role para baixo e toque em **"Adicionar à Tela de Início"**.
-4. Confirme clicando em "Adicionar".
-
----
-
-## 📱 Como Usar
-
-1.  **Crie sua Conta:** Use o botão "Crie uma aqui" e defina seu Nome de Conselheiro.
-2.  **Configure:** Vá na aba `Config`, digite o nome da Unidade (ex: Jaguar) e os membros.
-3.  **Avalie:** Na aba `Avaliar`, escolha o Mês/Semana e clique em "Iniciar Sequência".
-4.  **Acompanhe:** Veja o `Painel` para descobrir o destaque da semana.
-5.  **Audite:** (Apenas Admin) Acesse a aba `Admin` para ver os logs de atividade.
+1. Acesse o link pelo Safari.
+2. Toque no botão **Compartilhar** (quadrado com seta).
+3. Role e toque em **"Adicionar à Tela de Início"**.
 
 ---
 
 ## 📸 Status do Projeto
 
-✅ **Concluído e Pronto para Uso.**
+✅ **Versão 2.0 Finalizada.**
+* Sistema de Logs corrigido.
+* Botão de Ranking Anual com gatilho de data (Dezembro).
+* Cadastro e Login blindados contra erros de unidade.

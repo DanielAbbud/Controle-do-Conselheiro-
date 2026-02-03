@@ -45,7 +45,7 @@ const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
     showConfirmButton: false,
-    timer: 3000,
+    timer: 4000,
     timerProgressBar: true,
     didOpen: (toast) => {
         toast.addEventListener('mouseenter', Swal.stopTimer)
@@ -76,35 +76,26 @@ function detectingDevice() {
     return "🌐 Outro";
 }
 
-async function registrarLog(acao, detalhes) {
-    let id = userAtual ? `${userAtual.displayName} (${userAtual.email})` : document.getElementById('email-input')?.value || "Anonimo";
-    try {
-        await addDoc(collection(db, "logs"), {
-            usuario: id,
-            uid: userAtual ? userAtual.uid : "anonimo",
-            acao, detalhes,
-            data: new Date().toISOString(),
-            dispositivo: detectingDevice()
-        });
-    } catch (e) { console.error(e); }
-}
-
-// --- AUTENTICAÇÃO ---
+// --- AUTENTICAÇÃO V3.0 (COM SELEÇÃO DE UNIDADE) ---
 document.getElementById('link-toggle').addEventListener('click', (e) => {
     e.preventDefault();
     const login = document.getElementById('btn-entrar-email').classList.contains('hidden');
     if (login) {
+        // MODO LOGIN (Esconde seleção)
         document.getElementById('titulo-login').innerText = "Bem-vindo!";
         document.getElementById('btn-entrar-email').classList.remove('hidden');
         document.getElementById('btn-criar-conta').classList.add('hidden');
         document.getElementById('nome-input').classList.add('hidden');
+        document.getElementById('reg-unidade').classList.add('hidden'); // ESCONDE
         document.getElementById('txt-toggle').innerText = "Não tem conta?";
         document.getElementById('link-toggle').innerText = "Crie uma aqui";
     } else {
+        // MODO CRIAR CONTA (Mostra seleção)
         document.getElementById('titulo-login').innerText = "Criar Conta";
         document.getElementById('btn-entrar-email').classList.add('hidden');
         document.getElementById('btn-criar-conta').classList.remove('hidden');
         document.getElementById('nome-input').classList.remove('hidden');
+        document.getElementById('reg-unidade').classList.remove('hidden'); // MOSTRA
         document.getElementById('txt-toggle').innerText = "Já tem conta?";
         document.getElementById('link-toggle').innerText = "Faça login";
     }
@@ -117,17 +108,34 @@ document.getElementById('btn-entrar-email').addEventListener('click', () => {
     signInWithEmailAndPassword(auth, email, senha).catch(e => Swal.fire('Erro', e.message, 'error'));
 });
 
+// CRIAR CONTA (EMAIL) - SALVA UNIDADE
 document.getElementById('btn-criar-conta').addEventListener('click', async () => {
     const nome = document.getElementById('nome-input').value;
     const email = document.getElementById('email-input').value;
     const senha = document.getElementById('senha-input').value;
+    const unidadeSelecionada = document.getElementById('reg-unidade').value; // Pega do dropdown
+
     if (!nome) return Swal.fire('Erro', 'Digite seu nome', 'warning');
+    if (!unidadeSelecionada) return Swal.fire('Erro', 'Selecione sua unidade!', 'warning');
+
     try {
         const cred = await createUserWithEmailAndPassword(auth, email, senha);
         await updateProfile(cred.user, { displayName: nome });
         userAtual = cred.user;
-        registrarLog("Conta", `Criou conta: ${nome}`);
-        Swal.fire('Sucesso', `Bem-vindo ${nome}!`, 'success');
+
+        // SALVA O VÍNCULO IMEDIATAMENTE
+        await setDoc(doc(db, "configuracoes", userAtual.uid), {
+            unidade: unidadeSelecionada,
+            nome_conselheiro: nome,
+            membros: []
+        });
+
+        registrarLog("Conta", `Criou conta: ${nome} | Unidade: ${unidadeSelecionada}`);
+        Swal.fire('Sucesso', `Bem-vindo à unidade ${unidadeSelecionada}!`, 'success');
+
+        // Força recarregamento para entrar na lógica de verificação
+        setTimeout(() => window.location.reload(), 1500);
+
     } catch (e) { Swal.fire('Erro', e.message, 'error'); }
 });
 
@@ -135,41 +143,109 @@ document.getElementById('btn-login-google').addEventListener('click', () => {
     signInWithPopup(auth, provider).catch(e => Swal.fire('Erro', e.message, 'error'));
 });
 
+// --- LOGOUT ---
 document.getElementById('btn-logout').addEventListener('click', () => {
     registrarLog("Logout", "Saiu");
-    signOut(auth);
+    signOut(auth).then(() => {
+        userAtual = null;
+        dadosUnidade = { unidade: "", membros: [] };
+        avaliacoesCache = [];
+        window.location.reload();
+    });
 });
 
-// --- LISTA DE ADMINS ---
 const ADMINS = [
-    "V7FUkGG035dQiBo5FoB3DVYF14N2", // Daniel
-    "U6Oi4O5scdY70e43bLMGJZf82m1"   // Sérgio
+    "d254gqy6IiQZ7a8XChOgOX0Gs8f2", // Daniel 
 ];
 
-onAuthStateChanged(auth, (user) => {
+// --- MONITORAMENTO DE LOGIN E VERIFICAÇÃO DE VÍNCULO ---
+onAuthStateChanged(auth, async (user) => {
     if (user) {
         userAtual = user;
-        registrarLog("Login", "Entrou");
         document.getElementById('tela-login').classList.add('hidden');
-        document.getElementById('app-principal').style.display = 'block';
-        document.getElementById('btn-logout').classList.remove('hidden');
-        document.getElementById('user-name').innerText = user.displayName;
 
-        document.getElementById('nav-admin').style.display = ADMINS.includes(user.uid) ? "inline-block" : "none";
+        // 1. BUSCA OS DADOS NO BANCO PRIMEIRO (Para garantir que temos a Unidade)
+        const docSnap = await getDoc(doc(db, "configuracoes", user.uid));
 
-        carregarConfiguracao();
+        // 2. ATUALIZA A VARIÁVEL GLOBAL SE TIVER UNIDADE
+        if (docSnap.exists() && docSnap.data().unidade) {
+            dadosUnidade.unidade = docSnap.data().unidade;
+        }
+
+        // 3. AGORA SIM REGISTRA O LOG (Agora vai sair com o nome certo!)
+        registrarLog("Login", "Entrou");
+
+        // 4. VERIFICAÇÃO DO GOOGLE / PRIMEIRO ACESSO
+        if (!docSnap.exists() || !docSnap.data().unidade) {
+            // SE NÃO TIVER UNIDADE (Primeiro acesso Google):
+            document.getElementById('app-principal').classList.add('hidden');
+            document.getElementById('btn-logout').classList.remove('hidden');
+            document.getElementById('modal-setup-inicial').classList.remove('hidden'); // Abre Modal
+
+        } else {
+            // SE JÁ TIVER UNIDADE: Segue normal
+            document.getElementById('app-principal').classList.remove('hidden');
+            document.getElementById('app-principal').style.display = 'block';
+            document.getElementById('btn-logout').classList.remove('hidden');
+            document.getElementById('modal-setup-inicial').classList.add('hidden');
+
+            const nomeExibicao = user.displayName || user.email.split('@')[0];
+            const elemNome = document.getElementById('user-name');
+            if (elemNome) elemNome.innerText = nomeExibicao;
+
+            document.getElementById('nav-admin').style.display = ADMINS.includes(user.uid) ? "inline-block" : "none";
+
+            carregarConfiguracao();
+        }
+
     } else {
         userAtual = null;
         document.getElementById('tela-login').classList.remove('hidden');
+        document.getElementById('app-principal').classList.add('hidden');
         document.getElementById('app-principal').style.display = 'none';
         document.getElementById('btn-logout').classList.add('hidden');
+        document.getElementById('modal-setup-inicial').classList.add('hidden');
     }
 });
 
-// --- GESTÃO DE CADASTRO (CONFIG) ---
+// --- FUNÇÃO PARA SALVAR UNIDADE VIA MODAL GOOGLE ---
+window.salvarUnidadeGoogle = async () => {
+    const unidadeSelecionada = document.getElementById('google-unidade-select').value;
+
+    if (!unidadeSelecionada) return Swal.fire('Atenção', 'Selecione uma unidade para continuar.', 'warning');
+
+    try {
+        await setDoc(doc(db, "configuracoes", userAtual.uid), {
+            unidade: unidadeSelecionada,
+            nome_conselheiro: userAtual.displayName || "Conselheiro Google",
+            membros: []
+        }, { merge: true });
+
+        registrarLog("Configuração", `Vínculo Google: ${unidadeSelecionada}`);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Configurado!',
+            text: `Bem-vindo à unidade ${unidadeSelecionada}`,
+            timer: 2000,
+            showConfirmButton: false
+        }).then(() => {
+            window.location.reload(); // Recarrega para entrar no fluxo normal
+        });
+
+    } catch (e) {
+        Swal.fire('Erro', 'Falha ao salvar: ' + e.message, 'error');
+    }
+}
+
+// --- GESTÃO DE CADASTRO (CONFIG - VERSÃO 3.0 BLINDADA) ---
 async function carregarConfiguracao() {
     if (!userAtual) return;
-    document.getElementById('cfgNomeConselheiro').value = userAtual.displayName || "";
+
+    const campoConselheiro = document.getElementById('cfgNomeConselheiro');
+    if (campoConselheiro && !campoConselheiro.value) {
+        campoConselheiro.value = userAtual.displayName || "";
+    }
 
     const docSnap = await getDoc(doc(db, "configuracoes", userAtual.uid));
     const listaMembros = document.getElementById('lista-membros-config');
@@ -179,72 +255,252 @@ async function carregarConfiguracao() {
     if (listaMembros) listaMembros.innerHTML = "";
 
     if (docSnap.exists()) {
-        dadosUnidade = docSnap.data();
-        document.getElementById('cfgUnidade').value = dadosUnidade.unidade || "";
+        const prefs = docSnap.data();
 
-        if (dadosUnidade.membros && dadosUnidade.membros.length > 0) {
-            dadosUnidade.membros.forEach(nome => {
-                if (listaMembros) {
-                    listaMembros.innerHTML += `
-                        <li onclick="abrirFicha('${nome}')" style="padding: 12px 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;">
-                            <span style="font-weight: 500; display:flex; align-items:center; gap:8px;">
-                                <i class="fa-solid fa-user" style="color:#ccc;"></i> ${nome}
-                            </span>
-                            <span style="background: #e3f2fd; color: #1565C0; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; border:1px solid #bbdefb;">
-                                Ver Ficha
-                            </span>
-                        </li>`;
-                }
-                if (selectCorrecao) {
-                    let opt = document.createElement("option");
-                    opt.value = nome;
-                    opt.text = nome;
-                    selectCorrecao.add(opt);
-                }
-            });
-        } else if (listaMembros) {
-            listaMembros.innerHTML = "<li style='text-align:center; color:#999; padding: 20px;'>Nenhum membro cadastrado.<br>Clique no botão acima para adicionar.</li>";
+        // V3.0: Carrega a unidade e TRAVA O CAMPO
+        if (prefs.unidade) {
+            dadosUnidade.unidade = prefs.unidade;
+            const campoUnidade = document.getElementById('cfgUnidade');
+            campoUnidade.value = dadosUnidade.unidade;
+            campoUnidade.disabled = true; // <--- TRAVADO!
+
+            if (prefs.nome_conselheiro) {
+                document.getElementById('cfgNomeConselheiro').value = prefs.nome_conselheiro;
+            }
+            await importarMembros(true);
         }
+    } else {
+        // Fallback (caso raro): deixa criar
+        dadosUnidade = { unidade: "", membros: [] };
     }
 }
 
-// --- FUNÇÃO: ABRIR FICHA (CONFIG) ---
+function atualizarListaMembrosTela(membros) {
+    const listaMembros = document.getElementById('lista-membros-config');
+    const selectCorrecao = document.getElementById('selMembroCorrecao');
+
+    if (!listaMembros) return;
+
+    listaMembros.innerHTML = "";
+    if (selectCorrecao) selectCorrecao.innerHTML = "<option value=''>Selecione...</option>";
+
+    if (membros.length === 0) {
+        listaMembros.innerHTML = "<li style='padding:10px; color:#888; text-align:center;'>Nenhum membro encontrado.</li>";
+        return;
+    }
+
+    membros.forEach(nome => {
+        listaMembros.innerHTML += `
+            <li onclick="abrirFicha('${nome}')" style="padding: 12px 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                <span style="font-weight: 500;">👤 ${nome}</span>
+                <span style="font-size: 0.75rem; color: #1565C0;">Ver Ficha</span>
+            </li>`;
+
+        if (selectCorrecao) {
+            let opt = document.createElement("option");
+            opt.value = nome;
+            opt.text = nome;
+            selectCorrecao.add(opt);
+        }
+    });
+}
+
+// --- FUNÇÃO: IMPORTAR / SINCRONIZAR MEMBROS ---
+window.importarMembros = async (modoSilencioso = false) => {
+    // Agora pega o valor mesmo que esteja disabled
+    const nomeUnidadeInput = document.getElementById('cfgUnidade').value.trim().toUpperCase();
+
+    if (!nomeUnidadeInput) return;
+
+    if (!modoSilencioso) {
+        Swal.fire({ title: 'Sincronizando...', didOpen: () => Swal.showLoading() });
+    }
+
+    try {
+        const q = query(collection(db, "configuracoes"), where("unidade", "==", nomeUnidadeInput));
+        const querySnapshot = await getDocs(q);
+
+        let maiorLista = [];
+        let encontrou = false;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.membros && data.membros.length > maiorLista.length) {
+                maiorLista = data.membros;
+                encontrou = true;
+            }
+        });
+
+        if (encontrou) {
+            dadosUnidade.unidade = nomeUnidadeInput;
+            dadosUnidade.membros = maiorLista;
+
+            atualizarListaMembrosTela(maiorLista);
+
+            // Atualiza apenas a lista de membros, mantendo a unidade travada
+            await setDoc(doc(db, "configuracoes", userAtual.uid), {
+                membros: maiorLista
+            }, { merge: true });
+
+            if (!modoSilencioso) {
+                await registrarLog("Sincronização", `Sincronizou unidade: ${nomeUnidadeInput}`);
+                Swal.fire({ icon: 'success', title: 'Atualizado!', text: `${maiorLista.length} membros carregados.` });
+            }
+
+        } else {
+            if (!modoSilencioso) {
+                Swal.fire('Vazio', 'Unidade vinculada, mas sem membros cadastrados ainda.', 'info');
+            }
+        }
+
+    } catch (error) {
+        console.error(error);
+        if (!modoSilencioso) Swal.fire('Erro', 'Falha ao sincronizar.', 'error');
+    }
+}
+
+// --- SALVAR CADASTRO ---
+window.abrirModalCadastro = () => {
+    idEmEdicao = null;
+    nomeAntigoEmEdicao = null;
+    document.querySelectorAll('#modal-cadastro input').forEach(i => i.value = '');
+    document.getElementById('modal-cadastro').classList.remove('hidden');
+};
+
+window.fecharModalCadastro = () => {
+    document.getElementById('modal-cadastro').classList.add('hidden');
+};
+
+window.salvarCadastroMembro = async () => {
+    const nome = document.getElementById('cad-nome').value.trim();
+    if (!nome) return Swal.fire('Atenção', 'O nome é obrigatório!', 'warning');
+
+    // Pega a unidade mesmo travada
+    const unidadeAtual = document.getElementById('cfgUnidade').value.trim().toUpperCase();
+    if (!unidadeAtual) return Swal.fire('Erro', 'Erro de vínculo. Recarregue a página.', 'error');
+
+    const ficha = {
+        uid_conselheiro: userAtual.uid,
+        unidade: unidadeAtual,
+        nome: nome,
+        nasc: document.getElementById('cad-nasc').value,
+        idade: document.getElementById('cad-idade').value,
+        mae: document.getElementById('cad-mae').value,
+        tel_mae: document.getElementById('cad-tel-mae').value,
+        pai: document.getElementById('cad-pai').value,
+        tel_pai: document.getElementById('cad-tel-pai').value,
+        endereco: document.getElementById('cad-endereco').value,
+        numero: document.getElementById('cad-numero').value,
+        bairro: document.getElementById('cad-bairro').value,
+        cidade: document.getElementById('cad-cidade').value,
+        uf: document.getElementById('cad-uf').value,
+        data_cadastro: new Date().toISOString()
+    };
+
+    try {
+        const docConfigRef = doc(db, "configuracoes", userAtual.uid);
+        let listaMembros = dadosUnidade.membros || [];
+
+        if (idEmEdicao) {
+            await updateDoc(doc(db, "membros_detalhados", idEmEdicao), ficha);
+            if (nomeAntigoEmEdicao && nomeAntigoEmEdicao !== nome) {
+                listaMembros = listaMembros.map(m => m === nomeAntigoEmEdicao ? nome : m);
+                dadosUnidade.membros = listaMembros;
+                await setDoc(docConfigRef, { membros: listaMembros }, { merge: true });
+                atualizarListaMembrosTela(listaMembros);
+            }
+            registrarLog("Edição", `Editou: ${nome}`);
+            Swal.fire('Atualizado!', 'Ficha alterada.', 'success');
+        } else {
+            await addDoc(collection(db, "membros_detalhados"), ficha);
+
+            if (!listaMembros.includes(nome)) {
+                listaMembros.push(nome);
+                dadosUnidade.membros = listaMembros;
+                dadosUnidade.unidade = unidadeAtual;
+
+                await setDoc(docConfigRef, {
+                    unidade: unidadeAtual,
+                    membros: listaMembros
+                }, { merge: true });
+
+                atualizarListaMembrosTela(listaMembros);
+            }
+            registrarLog("Cadastro", `Novo membro: ${nome}`);
+            Swal.fire('Salvo!', 'Membro adicionado.', 'success');
+        }
+
+        fecharModalCadastro();
+
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Erro', 'Falha ao salvar: ' + e.message, 'error');
+    }
+};
+
+// --- SALVAR CONFIG (AGORA SÓ SALVA O NOME DO CONSELHEIRO, A UNIDADE É FIXA) ---
+window.salvarConfiguracao = async () => {
+    const nomeConselheiro = document.getElementById('cfgNomeConselheiro').value;
+    const unidade = document.getElementById('cfgUnidade').value.trim().toUpperCase(); // Pega o valor travado
+
+    if (!unidade) return Swal.fire('Erro', 'Unidade não vinculada!', 'error');
+
+    await registrarLog("Configuração", `Atualizou perfil: ${nomeConselheiro}`);
+
+    // Só atualiza o nome, mantém a unidade que já estava
+    await setDoc(doc(db, "configuracoes", userAtual.uid), {
+        unidade: unidade,
+        nome_conselheiro: nomeConselheiro,
+        membros: dadosUnidade.membros
+    }, { merge: true });
+
+    if (nomeConselheiro) {
+        await updateProfile(userAtual, { displayName: nomeConselheiro });
+        document.getElementById('user-name').innerText = nomeConselheiro;
+    }
+
+    Swal.fire('Salvo', 'Perfil atualizado!', 'success');
+};
+
+// --- ABRIR FICHA ---
 window.abrirFicha = async function (nome) {
     const modal = document.getElementById('modal-ficha');
     const corpo = document.getElementById('corpo-ficha');
     const headerUnidade = document.getElementById('ficha-unidade');
 
-    headerUnidade.innerText = document.getElementById('cfgUnidade').value || "S/ UNIDADE";
+    headerUnidade.innerText = dadosUnidade.unidade || "S/ UNIDADE";
     corpo.innerHTML = "Carregando dados...";
     modal.classList.remove('hidden');
 
     try {
-        const q = query(collection(db, "membros_detalhados"),
-            where("uid_conselheiro", "==", userAtual.uid),
-            where("nome", "==", nome));
-        const snap = await getDocs(q);
+        let q = query(collection(db, "membros_detalhados"),
+            where("nome", "==", nome),
+            where("unidade", "==", dadosUnidade.unidade));
+        let snap = await getDocs(q);
+
+        if (snap.empty) {
+            q = query(collection(db, "membros_detalhados"), where("nome", "==", nome));
+            snap = await getDocs(q);
+        }
 
         if (!snap.empty) {
             const d = snap.docs[0].data();
             const docId = snap.docs[0].id;
 
-            // NA CONFIG SÓ APARECE EDITAR
             corpo.innerHTML = `
                 <div style="font-weight:bold; font-size:1.1rem; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
                     <i class="fa-solid fa-user-circle" style="color:#777;"></i> ${d.nome} <span style="font-weight:normal; font-size:0.9rem; color:#666;">(Idade: ${d.idade || '?'})</span>
                 </div>
                 <div style="margin-bottom:8px;">
-                    <i class="fa-solid fa-phone" style="color:#E65100; width:20px;"></i> <strong>Mãe:</strong> ${d.mae} (${d.tel_mae})
+                    <i class="fa-solid fa-phone" style="color:#E65100; width:20px;"></i> <strong>Mãe:</strong> ${d.mae || '-'} (${d.tel_mae || '-'})
                 </div>
                 <div style="margin-bottom:8px;">
-                    <i class="fa-solid fa-phone" style="color:#E65100; width:20px;"></i> <strong>Pai:</strong> ${d.pai} (${d.tel_pai})
+                    <i class="fa-solid fa-phone" style="color:#E65100; width:20px;"></i> <strong>Pai:</strong> ${d.pai || '-'} (${d.tel_pai || '-'})
                 </div>
                 <div>
-                    <i class="fa-solid fa-map-pin" style="color:#D32F2F; width:20px;"></i> ${d.endereco}, ${d.numero}
+                    <i class="fa-solid fa-map-pin" style="color:#D32F2F; width:20px;"></i> ${d.endereco || '-'}, ${d.numero || ''}
                 </div>
-                
                 <hr style="margin: 20px 0 10px 0; border:0; border-top:1px solid #eee;">
-                
                 <div style="display:flex; justify-content: flex-end;">
                     <button onclick="prepararEdicao('${docId}', '${nome.replace(/'/g, "\\'")}')" class="btn" style="border:1px solid #E65100; color:#E65100; font-size:0.9rem; padding: 8px 25px;">
                         <i class="fa-solid fa-pencil"></i> Editar
@@ -252,7 +508,7 @@ window.abrirFicha = async function (nome) {
                 </div>
             `;
         } else {
-            corpo.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>Ficha incompleta (nome na lista, mas sem dados).</div>";
+            corpo.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>Ficha não encontrada no banco detalhado.</div>";
         }
     } catch (e) {
         console.error(e);
@@ -260,13 +516,11 @@ window.abrirFicha = async function (nome) {
     }
 }
 
-// --- EDITAR E EXCLUIR ---
 window.prepararEdicao = async (id, nome) => {
     try {
         const docSnap = await getDoc(doc(db, "membros_detalhados", id));
         if (docSnap.exists()) {
             const d = docSnap.data();
-
             document.getElementById('cad-nome').value = d.nome || "";
             document.getElementById('cad-nasc').value = d.nasc || "";
             document.getElementById('cad-idade').value = d.idade || "";
@@ -294,7 +548,7 @@ window.prepararEdicao = async (id, nome) => {
 window.deletarFicha = async (id, nome) => {
     const result = await Swal.fire({
         title: 'Excluir Definitivamente?',
-        text: "Isso apagará a ficha e removerá o membro da unidade. Não tem volta!",
+        text: "Isso apagará a ficha e removerá o membro da unidade.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -305,194 +559,28 @@ window.deletarFicha = async (id, nome) => {
     if (result.isConfirmed) {
         try {
             await deleteDoc(doc(db, "membros_detalhados", id));
+
+            if (dadosUnidade.membros.includes(nome)) {
+                dadosUnidade.membros = dadosUnidade.membros.filter(m => m !== nome);
+                await setDoc(doc(db, "configuracoes", userAtual.uid), {
+                    unidade: dadosUnidade.unidade,
+                    membros: dadosUnidade.membros
+                }, { merge: true });
+
+                atualizarListaMembrosTela(dadosUnidade.membros);
+            }
+
             registrarLog("Exclusão Admin", `Admin removeu: ${nome}`);
             Swal.fire('Pronto', 'Membro removido com sucesso.', 'success');
-
             document.getElementById('modal-ficha').classList.add('hidden');
 
-            if (!document.getElementById('sec-admin').classList.contains('hidden')) {
-                carregarFichasGeral();
-            }
-            if (!document.getElementById('sec-config').classList.contains('hidden')) {
-                carregarConfiguracao();
-            }
         } catch (e) {
-            if (!document.getElementById('sec-admin').classList.contains('hidden')) {
-                carregarFichasGeral();
-            }
-            Swal.fire('Info', 'Registro processado.', 'success');
+            Swal.fire('Erro', 'Falha ao remover: ' + e.message, 'error');
         }
     }
 }
 
-// --- SALVAR (NOVO OU EDIÇÃO) ---
-window.abrirModalCadastro = () => {
-    idEmEdicao = null;
-    nomeAntigoEmEdicao = null;
-    document.querySelectorAll('#modal-cadastro input').forEach(i => i.value = '');
-    document.getElementById('modal-cadastro').classList.remove('hidden');
-};
-
-window.fecharModalCadastro = () => {
-    document.getElementById('modal-cadastro').classList.add('hidden');
-};
-
-window.salvarCadastroMembro = async () => {
-    const nome = document.getElementById('cad-nome').value.trim();
-    if (!nome) return Swal.fire('Atenção', 'O nome é obrigatório!', 'warning');
-
-    const ficha = {
-        uid_conselheiro: userAtual.uid,
-        unidade: document.getElementById('cfgUnidade').value || "Sem Unidade",
-        nome: nome,
-        nasc: document.getElementById('cad-nasc').value,
-        idade: document.getElementById('cad-idade').value,
-        mae: document.getElementById('cad-mae').value,
-        tel_mae: document.getElementById('cad-tel-mae').value,
-        pai: document.getElementById('cad-pai').value,
-        tel_pai: document.getElementById('cad-tel-pai').value,
-        endereco: document.getElementById('cad-endereco').value,
-        numero: document.getElementById('cad-numero').value,
-        bairro: document.getElementById('cad-bairro').value,
-        cidade: document.getElementById('cad-cidade').value,
-        uf: document.getElementById('cad-uf').value,
-        data_cadastro: new Date().toISOString()
-    };
-
-    try {
-        const docConfigRef = doc(db, "configuracoes", userAtual.uid);
-        const docConfigSnap = await getDoc(docConfigRef);
-        let listaMembros = docConfigSnap.exists() ? (docConfigSnap.data().membros || []) : [];
-
-        if (idEmEdicao) {
-            await updateDoc(doc(db, "membros_detalhados", idEmEdicao), ficha);
-            if (nomeAntigoEmEdicao && nomeAntigoEmEdicao !== nome) {
-                listaMembros = listaMembros.map(m => m === nomeAntigoEmEdicao ? nome : m);
-                await updateDoc(docConfigRef, { membros: listaMembros });
-            }
-            registrarLog("Edição", `Editou: ${nome}`);
-            Swal.fire('Atualizado!', 'Ficha alterada.', 'success');
-        } else {
-            // 👇 A CORREÇÃO ESTÁ AQUI (Adicionei o parênteses que faltava no 'collection')
-            await addDoc(collection(db, "membros_detalhados"), ficha);
-
-            if (!listaMembros.includes(nome)) {
-                listaMembros.push(nome);
-                await setDoc(docConfigRef, {
-                    unidade: ficha.unidade,
-                    membros: listaMembros
-                }, { merge: true });
-            }
-            registrarLog("Cadastro", `Novo membro: ${nome}`);
-            Swal.fire('Salvo!', 'Membro adicionado.', 'success');
-        }
-
-        fecharModalCadastro();
-
-        if (!document.getElementById('sec-admin').classList.contains('hidden')) {
-            carregarFichasGeral();
-        } else {
-            carregarConfiguracao();
-        }
-
-    } catch (e) {
-        console.error(e);
-        Swal.fire('Erro', 'Falha ao salvar: ' + e.message, 'error');
-    }
-};
-
-document.getElementById('btn-salvar-config').addEventListener('click', async () => {
-    const nomeConselheiro = document.getElementById('cfgNomeConselheiro').value;
-    const unidade = document.getElementById('cfgUnidade').value;
-
-    await setDoc(doc(db, "configuracoes", userAtual.uid), { unidade }, { merge: true });
-    if (nomeConselheiro) await updateProfile(userAtual, { displayName: nomeConselheiro });
-
-    Swal.fire('Salvo', 'Dados atualizados', 'success');
-});
-
-
-// --- ADMINISTRAÇÃO ---
-window.alternarVisaoAdmin = (visao) => {
-    document.getElementById('admin-view-logs').classList.add('hidden');
-    document.getElementById('admin-view-fichas').classList.add('hidden');
-
-    if (visao === 'logs') document.getElementById('admin-view-logs').classList.remove('hidden');
-    if (visao === 'fichas') {
-        document.getElementById('admin-view-fichas').classList.remove('hidden');
-        carregarFichasGeral();
-    }
-}
-
-window.carregarLogs = async () => {
-    const lista = document.getElementById('lista-logs');
-    const dataFiltro = document.getElementById('filtroDataAdmin').value;
-    lista.innerHTML = "Carregando...";
-    let q;
-    if (dataFiltro) {
-        const start = new Date(dataFiltro); start.setUTCHours(0, 0, 0, 0);
-        const end = new Date(dataFiltro); end.setUTCHours(23, 59, 59, 999);
-        q = query(collection(db, "logs"), where("data", ">=", start.toISOString()), where("data", "<=", end.toISOString()), orderBy("data", "desc"));
-    } else {
-        q = query(collection(db, "logs"), orderBy("data", "desc"), limit(50));
-    }
-    const snap = await getDocs(q);
-    lista.innerHTML = "";
-    snap.forEach(doc => {
-        const d = doc.data();
-        let cor = d.acao.includes("Erro") ? "#f44336" : "#2196F3";
-        lista.innerHTML += `<li style="border-left:4px solid ${cor}; padding:10px; margin-bottom:5px; background:#fff;">
-            <small>${new Date(d.data).toLocaleString()}</small><br>
-            <strong>${d.usuario}:</strong> ${d.acao} - ${d.detalhes}
-        </li>`;
-    });
-}
-
-window.carregarFichasGeral = async () => {
-    const div = document.getElementById('lista-fichas-global');
-    div.innerHTML = "<p>Buscando fichas...</p>";
-    try {
-        const q = query(collection(db, "membros_detalhados"), orderBy("unidade"));
-        const snap = await getDocs(q);
-        if (snap.empty) { div.innerHTML = "<p>Nenhuma ficha encontrada.</p>"; return; }
-        let html = ""; let unidadeAtual = "";
-
-        snap.forEach(doc => {
-            const d = doc.data();
-            const docId = doc.id;
-
-            if (d.unidade !== unidadeAtual) {
-                unidadeAtual = d.unidade;
-                html += `<h4 style="background:#E65100; color:white; padding:5px; margin-top:15px;">🛡️ Unidade: ${unidadeAtual}</h4>`;
-            }
-
-            html += `
-            <div style="background:white; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:5px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div>
-                        <p><strong>👤 ${d.nome}</strong> (Idade: ${d.idade || '?'})</p>
-                        <p style="font-size:0.9rem; margin:5px 0;">
-                           📞 <strong>Mãe:</strong> ${d.mae} (${d.tel_mae})<br>
-                           📞 <strong>Pai:</strong> ${d.pai} (${d.tel_pai})<br>
-                           📍 ${d.endereco}, ${d.numero} - ${d.bairro}
-                        </p>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:5px;">
-                        <button onclick="prepararEdicao('${docId}', '${d.nome.replace(/'/g, "\\'")}')" class="btn btn-secondary" style="font-size:0.8rem; padding: 5px 10px;">
-                            ✏️ Editar
-                        </button>
-                        <button onclick="deletarFicha('${docId}', '${d.nome.replace(/'/g, "\\'")}')" class="btn btn-danger" style="font-size:0.8rem; padding: 5px 10px;">
-                            🗑️ Excluir
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-        });
-        div.innerHTML = html;
-    } catch (e) { console.error(e); div.innerHTML = "<p style='color:red'>Erro ao carregar fichas.</p>"; }
-}
-
-// --- AVALIAÇÃO ---
+// --- LÓGICA DE AVALIAÇÃO E NOTAS ---
 let wizardIndex = 0;
 document.getElementById('btn-iniciar').addEventListener('click', () => {
     if (!dadosUnidade.membros?.length) return Swal.fire('Ops', 'Cadastre membros na Config!', 'info');
@@ -504,60 +592,132 @@ document.getElementById('btn-corrigir').addEventListener('click', () => {
     wizardIndex = dadosUnidade.membros.indexOf(nome);
     abrirWizard();
 });
-function abrirWizard() {
-    document.getElementById('wizard-form').classList.remove('hidden');
-    document.getElementById('wizard-form').scrollIntoView({ behavior: 'smooth' });
-    document.getElementById('wiz-nome').innerText = dadosUnidade.membros[wizardIndex];
-    document.getElementById('contador-passo').innerText = `${wizardIndex + 1}/${dadosUnidade.membros.length}`;
-    for (let i = 1; i <= 8; i++) document.getElementById('n' + i).value = '';
+
+const btnProximo = document.getElementById('btn-proximo');
+if (btnProximo) {
+    btnProximo.addEventListener('click', async () => {
+        if (!dadosUnidade.unidade) {
+            return Swal.fire('Erro', 'Configure o nome da Unidade na aba Config antes de avaliar!', 'error');
+        }
+
+        // --- SEGURANÇA: Se estiver travado, só pula, não salva! ---
+        if (document.getElementById('n1').disabled) {
+            wizardIndex++;
+            if (wizardIndex < dadosUnidade.membros.length) {
+                abrirWizard();
+            } else {
+                Swal.fire('Fim', 'Avaliações concluídas!', 'success');
+                fecharWizard();
+                navegar('dashboard');
+            }
+            return;
+        }
+
+        const nome = dadosUnidade.membros[wizardIndex];
+        const mes = document.getElementById('selMes').value;
+        const semana = document.getElementById('selSemana').value;
+
+        let notas = [], total = 0;
+        for (let i = 1; i <= 8; i++) {
+            let v = Number(document.getElementById('n' + i).value) || 0;
+            notas.push(v); total += v;
+        }
+
+        const unidadeSafe = dadosUnidade.unidade.trim().toUpperCase().replace(/\s+/g, '_');
+        const id = `${unidadeSafe}_${nome.replace(/\s+/g, '')}_${mes}_${semana}`;
+
+        const agora = new Date();
+        const dataFormatada = agora.toLocaleString('pt-BR');
+
+        try {
+            await setDoc(doc(db, "avaliacoes", id), {
+                unidade: dadosUnidade.unidade,
+                autor_uid: userAtual.uid,
+                autor_nome: userAtual.displayName,
+                nome, mes, semana, notas, total,
+                data: agora.toISOString(),
+                data_legivel: dataFormatada
+            });
+
+            await registrarLog("Avaliação", `Avaliou: ${nome} | ${dataFormatada} | ${total} pts`);
+
+            Toast.fire({ icon: 'success', title: 'Nota Salva!' });
+            avaliacoesCache = [];
+
+            wizardIndex++;
+            if (wizardIndex < dadosUnidade.membros.length) {
+                abrirWizard();
+            } else {
+                Swal.fire('Fim', 'Avaliações concluídas!', 'success');
+                fecharWizard();
+                navegar('dashboard');
+            }
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Erro', e.message, 'error');
+        }
+    });
 }
-// --- 1. SUBSTITUA O BLOCO DO BOTÃO PRÓXIMO POR ESTE ---
-document.getElementById('btn-proximo').addEventListener('click', async () => {
-    // Verificação de Segurança: Obriga a ter unidade configurada
-    if (!dadosUnidade.unidade) {
-        return Swal.fire('Erro', 'Configure o nome da Unidade na aba Config antes de avaliar!', 'error');
-    }
+
+async function abrirWizard() {
+    const wizardForm = document.getElementById('wizard-form');
+    wizardForm.classList.remove('hidden');
+    wizardForm.scrollIntoView({ behavior: 'smooth' });
 
     const nome = dadosUnidade.membros[wizardIndex];
+    document.getElementById('wiz-nome').innerText = nome;
+    document.getElementById('contador-passo').innerText =
+        `${wizardIndex + 1} / ${dadosUnidade.membros.length}`;
+
     const mes = document.getElementById('selMes').value;
     const semana = document.getElementById('selSemana').value;
 
-    let notas = [], total = 0;
+    // 1. Limpa e TRAVA tudo inicialmente
     for (let i = 1; i <= 8; i++) {
-        let v = Number(document.getElementById('n' + i).value) || 0;
-        notas.push(v); total += v;
+        let input = document.getElementById('n' + i);
+        input.value = '';
+        input.style.borderColor = '#ddd';
+        input.disabled = true; // Começa travado
     }
 
-    // --- A MÁGICA ACONTECE AQUI ---
-    // Cria um ID baseado na UNIDADE (ex: JAGUAR_JOAO...). 
-    // Assim, se o Adjunto avaliar a mesma unidade, o ID é o mesmo.
     const unidadeSafe = dadosUnidade.unidade.trim().toUpperCase().replace(/\s+/g, '_');
-    const id = `${unidadeSafe}_${nome.replace(/\s+/g, '')}_${mes}_${semana}`;
+    const idCheck = `${unidadeSafe}_${nome.replace(/\s+/g, '')}_${mes}_${semana}`;
 
     try {
-        await setDoc(doc(db, "avaliacoes", id), {
-            unidade: dadosUnidade.unidade,     // Importante para o filtro
-            autor_uid: userAtual.uid,          // Quem fez a avaliação (Audit)
-            autor_nome: userAtual.displayName, // Nome de quem fez
-            nome, mes, semana, notas, total,
-            data: new Date().toISOString()
-        });
+        const docSnap = await getDoc(doc(db, "avaliacoes", idCheck));
 
-        Toast.fire({ icon: 'success', title: 'Nota Salva!' });
-        avaliacoesCache = []; // Limpa o cache para recarregar
+        if (docSnap.exists()) {
+            const dados = docSnap.data();
+            const dataAvaliacao = dados.data ? new Date(dados.data).toLocaleString('pt-BR') : 'Data desc.';
 
-        wizardIndex++;
-        if (wizardIndex < dadosUnidade.membros.length) abrirWizard();
-        else {
-            Swal.fire('Fim', 'Avaliações concluídas!', 'success');
-            fecharWizard();
-            navegar('dashboard');
+            Toast.fire({
+                icon: 'info',
+                title: 'Já Avaliado!',
+                text: `Por: ${dados.autor_nome || 'Alguém'}\nEm: ${dataAvaliacao}`
+            });
+
+            dados.notas.forEach((nota, index) => {
+                let input = document.getElementById('n' + (index + 1));
+                input.value = nota;
+                input.style.borderColor = '#4CAF50';
+                input.disabled = true; // MANTÉM TRAVADO
+            });
+
+            document.getElementById('btn-proximo').innerText = "Próximo (Já Avaliado) ➡️";
+
+        } else {
+            // Se NÃO tem nota, DESTRAVA
+            for (let i = 1; i <= 8; i++) {
+                document.getElementById('n' + i).disabled = false;
+            }
+            document.getElementById('btn-proximo').innerText = "Salvar e Próximo ➡️";
         }
-    } catch (e) {
-        console.error(e);
-        Swal.fire('Erro', e.message, 'error');
+    } catch (error) {
+        console.log("Erro ao verificar duplicidade:", error);
+        for (let i = 1; i <= 8; i++) document.getElementById('n' + i).disabled = false;
     }
-});
+}
+
 window.fecharWizard = () => document.getElementById('wizard-form').classList.add('hidden');
 
 // --- DASHBOARD E DETALHES ---
@@ -568,16 +728,24 @@ window.atualizarDashboard = async () => {
     const mes = document.getElementById('dashMes').value;
     const semana = document.getElementById('dashSemana').value;
 
-    // Se não tiver unidade configurada, não busca nada
+    // --- LÓGICA DO BOTÃO SECRETO ---
+    const btnRanking = document.getElementById('btnRankingAnual');
+    if (btnRanking) {
+        if (mes === "Dezembro") {
+            btnRanking.style.display = "block"; // Mostra em Dezembro
+        } else {
+            btnRanking.style.display = "none";  // Esconde nos outros meses
+        }
+    }
+    // -------------------------------
+
     if (!dadosUnidade.unidade) {
         div.innerHTML = "<p style='padding:20px; text-align:center'>Configure o nome da unidade na aba Config.</p>";
         return;
     }
 
-    // Busca no banco (agora filtrando pela UNIDADE e não pelo usuário)
     if (avaliacoesCache.length === 0) {
         try {
-            // AQUI É O PULO DO GATO: Filtra pela UNIDADE
             const q = query(collection(db, "avaliacoes"), where("unidade", "==", dadosUnidade.unidade));
             const snap = await getDocs(q);
             avaliacoesCache = [];
@@ -598,9 +766,7 @@ window.atualizarDashboard = async () => {
     let html = "<ul style='list-style:none;padding:0'>";
     let totalG = [0, 0, 0, 0, 0, 0, 0, 0];
 
-    // Ordena do maior para o menor
     filt.sort((a, b) => b.total - a.total).forEach(d => {
-        // Mostra quem avaliou no detalhe
         html += `<li onclick="abrirDetalhes('${d.nome}')" style="background:#f9f9f9;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;cursor:pointer;border-radius:6px;border-left:4px solid #E65100;">
             <span>
                 <div style="font-weight:bold">👤 ${d.nome}</div>
@@ -710,44 +876,297 @@ document.getElementById('nav-admin').onclick = () => navegar('admin');
 
 
 // =========================================
-// RECUPERAÇÃO DE SENHA (ESQUECI MINHA SENHA)
+// RECUPERAÇÃO DE SENHA
 // =========================================
 const btnEsqueci = document.getElementById('btn-esqueci-senha');
-
 if (btnEsqueci) {
     btnEsqueci.addEventListener('click', (e) => {
-        e.preventDefault(); // Evita que a tela pule pro topo
-
+        e.preventDefault();
         const email = document.getElementById('email-input').value;
-
         if (!email) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Digite seu e-mail!',
-                text: 'Preencha o campo de e-mail acima antes de clicar em "Esqueci minha senha".'
-            });
+            Swal.fire({ icon: 'warning', title: 'Digite seu e-mail!', text: 'Preencha o campo de e-mail acima.' });
+            return;
+        }
+        sendPasswordResetEmail(auth, email)
+            .then(() => { Swal.fire({ icon: 'success', title: 'E-mail Enviado!' }); })
+            .catch((error) => { Swal.fire({ icon: 'error', title: 'Erro', text: error.message }); });
+    });
+}
+
+// =========================================
+// ADMINISTRAÇÃO E LOGS
+// =========================================
+window.alternarVisaoAdmin = (visao) => {
+    document.getElementById('admin-view-logs').classList.add('hidden');
+    document.getElementById('admin-view-fichas').classList.add('hidden');
+
+    if (visao === 'logs') document.getElementById('admin-view-logs').classList.remove('hidden');
+    if (visao === 'fichas') {
+        document.getElementById('admin-view-fichas').classList.remove('hidden');
+        carregarFichasGeral();
+    }
+}
+
+window.carregarLogs = async () => {
+    const lista = document.getElementById('lista-logs');
+    const dataFiltroInput = document.getElementById('filtroDataAdmin').value; // Formato YYYY-MM-DD
+
+    lista.innerHTML = "<li style='text-align:center; padding:10px; color:#666;'>🔄 Buscando registros...</li>";
+
+    try {
+        const q = query(collection(db, "logs"), orderBy("data", "desc"), limit(100));
+        const snap = await getDocs(q);
+
+        lista.innerHTML = "";
+
+        if (snap.empty) {
+            lista.innerHTML = "<li style='text-align:center; padding:10px;'>Nenhum registro encontrado.</li>";
             return;
         }
 
-        sendPasswordResetEmail(auth, email)
-            .then(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'E-mail Enviado!',
-                    text: 'Verifique sua caixa de entrada (e o Spam) para criar uma nova senha.'
-                });
-            })
-            .catch((error) => {
-                console.error("Erro ao recuperar senha:", error);
-                let msg = "Erro ao enviar e-mail.";
-                if (error.code === 'auth/user-not-found') msg = "E-mail não cadastrado.";
-                if (error.code === 'auth/invalid-email') msg = "E-mail inválido.";
+        let encontrouAlgum = false;
 
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erro',
-                    text: msg
-                });
-            });
-    });
+        snap.forEach(doc => {
+            const d = doc.data();
+            let mostrar = true;
+
+            // Filtro de data visual
+            if (dataFiltroInput) {
+                const dataLog = d.data ? d.data.split('T')[0] : "";
+                if (dataLog !== dataFiltroInput) mostrar = false;
+            }
+
+            if (mostrar) {
+                encontrouAlgum = true;
+                const dataFormatada = d.data ? new Date(d.data).toLocaleString('pt-BR') : 'Data desc.';
+
+                let borderCor = "#2196F3"; // Azul (Info)
+                let icone = "ℹ️";
+
+                if (d.acao.includes("Exclusão") || d.acao.includes("Erro")) {
+                    borderCor = "#D32F2F"; // Vermelho (Erro/Alerta)
+                    icone = "🚨";
+                } else if (d.acao.includes("Avaliação")) {
+                    borderCor = "#4CAF50"; // Verde (Sucesso)
+                    icone = "✅";
+                } else if (d.acao.includes("Configuração")) {
+                    borderCor = "#FF9800"; // Laranja (Config)
+                    icone = "⚙️";
+                }
+
+                lista.innerHTML += `
+                <li style="border-left: 5px solid ${borderCor}; padding: 12px; margin-bottom: 8px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 4px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <strong style="color:#333;">${icone} ${d.acao}</strong>
+                        <small style="color:#666; font-size:0.8rem;">${dataFormatada}</small>
+                    </div>
+                    <div style="font-size:0.9rem; color:#444; margin-bottom:5px;">
+                        ${d.detalhes}
+                    </div>
+                    <div style="border-top:1px solid #eee; padding-top:5px; font-size:0.75rem; color:#888; display:flex; flex-direction:column; gap:2px;">
+                        <span style="word-break: break-word; font-size: 0.7rem;">👤 ${d.usuario || 'Desconhecido'}</span>
+                        <span style="align-self: flex-end;">📱 ${d.dispositivo || 'Web'}</span>
+                    </div>
+                </li>`;
+            }
+        });
+
+        if (!encontrouAlgum) {
+            lista.innerHTML = "<li style='text-align:center; padding:20px; color:#888'>Nenhum log encontrado para esta data.</li>";
+        }
+
+    } catch (e) {
+        console.error(e);
+        lista.innerHTML = `<li style="color:red; padding:10px;">Erro ao carregar logs: ${e.message}</li>`;
+    }
+}
+
+window.carregarFichasGeral = async () => {
+    const div = document.getElementById('lista-fichas-global');
+    div.innerHTML = "<p>Buscando fichas...</p>";
+    try {
+        const q = query(collection(db, "membros_detalhados"), orderBy("unidade"));
+        const snap = await getDocs(q);
+        if (snap.empty) { div.innerHTML = "<p>Nenhuma ficha encontrada.</p>"; return; }
+        let html = ""; let unidadeAtual = "";
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const docId = doc.id;
+
+            if (d.unidade !== unidadeAtual) {
+                unidadeAtual = d.unidade;
+                html += `<h4 style="background:#E65100; color:white; padding:5px; margin-top:15px;">🛡️ Unidade: ${unidadeAtual}</h4>`;
+            }
+
+            html += `
+            <div style="background:white; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:5px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <p><strong>👤 ${d.nome}</strong> (Idade: ${d.idade || '?'})</p>
+                        <p style="font-size:0.9rem; margin:5px 0;">
+                           📞 <strong>Mãe:</strong> ${d.mae} (${d.tel_mae})<br>
+                           📞 <strong>Pai:</strong> ${d.pai} (${d.tel_pai})<br>
+                           📍 ${d.endereco}, ${d.numero} - ${d.bairro}
+                        </p>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:5px;">
+                        <button onclick="prepararEdicao('${docId}', '${d.nome.replace(/'/g, "\\'")}')" class="btn btn-secondary" style="font-size:0.8rem; padding: 5px 10px;">
+                            ✏️ Editar
+                        </button>
+                        <button onclick="deletarFicha('${docId}', '${d.nome.replace(/'/g, "\\'")}')" class="btn btn-danger" style="font-size:0.8rem; padding: 5px 10px;">
+                            🗑️ Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        });
+        div.innerHTML = html;
+    } catch (e) { console.error(e); div.innerHTML = "<p style='color:red'>Erro ao carregar fichas.</p>"; }
+}
+
+async function registrarLog(acao, detalhes) {
+    let idUser = "Anonimo";
+
+    if (userAtual) {
+        // Tenta pegar a unidade do cache local primeiro
+        let unidadeUser = dadosUnidade.unidade || "S/ Unidade";
+
+        // Formata para: Nome (email) | Und: NomeDaUnidade
+        idUser = `${userAtual.displayName || 'Sem Nome'} (${userAtual.email}) | Und: ${unidadeUser}`;
+    } else {
+        // Se for no login (ainda não tem userAtual 100% carregado), tenta pegar do input
+        const emailInput = document.getElementById('email-input');
+        if (emailInput && emailInput.value) {
+            idUser = `Tentativa: ${emailInput.value}`;
+        }
+    }
+
+    try {
+        await addDoc(collection(db, "logs"), {
+            data: new Date().toISOString(),
+            uid: userAtual ? userAtual.uid : "ANONIMO",
+            usuario: idUser, // Agora salva com o formato novo
+            acao: acao,
+            detalhes: detalhes,
+            dispositivo: detectingDevice()
+        });
+        console.log("Log registrado:", acao);
+    } catch (error) {
+        console.error("Falha silenciosa ao gravar log:", error);
+    }
+}
+// =========================================
+
+// 1. CALCULA O DESTAQUE DO MÊS SELECIONADO
+window.verRelatorioMensal = async () => {
+    if (!dadosUnidade.unidade) return Swal.fire('Erro', 'Configure a unidade primeiro.', 'error');
+
+    const mesSelecionado = document.getElementById('dashMes').value;
+
+    Swal.fire({ title: `Calculando ${mesSelecionado}...`, didOpen: () => Swal.showLoading() });
+
+    try {
+        // Busca TODAS as notas desta unidade neste mês (todas as semanas)
+        const q = query(collection(db, "avaliacoes"),
+            where("unidade", "==", dadosUnidade.unidade),
+            where("mes", "==", mesSelecionado)
+        );
+
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            return Swal.fire('Sem dados', `Nenhuma avaliação encontrada em ${mesSelecionado}.`, 'info');
+        }
+
+        // Agrupa e soma as notas por nome
+        let placar = {};
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (!placar[d.nome]) placar[d.nome] = 0;
+            placar[d.nome] += d.total;
+        });
+
+        // Transforma em lista e ordena
+        let ranking = Object.entries(placar)
+            .sort((a, b) => b[1] - a[1]) // Maior para o menor
+            .map((item, index) => {
+                let medalha = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}º`;
+                return `<li style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                            <span>${medalha} <strong>${item[0]}</strong></span>
+                            <span style="color:#E65100; font-weight:bold;">${item[1]} pts</span>
+                        </li>`;
+            }).join('');
+
+        Swal.fire({
+            title: `🏆 Destaques de ${mesSelecionado}`,
+            html: `<ul style="list-style:none; padding:0; text-align:left;">${ranking}</ul>`,
+            confirmButtonText: 'Fechar'
+        });
+
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Erro', 'Falha ao calcular mês.', 'error');
+    }
+}
+
+// 2. CALCULA O DESTAQUE DO ANO (TODOS OS TEMPOS)
+window.verRankingAnual = async () => {
+    if (!dadosUnidade.unidade) return Swal.fire('Erro', 'Configure a unidade primeiro.', 'error');
+
+    Swal.fire({ title: 'Calculando Ranking Anual...', didOpen: () => Swal.showLoading() });
+
+    try {
+        // Busca TUDO da unidade (sem filtro de mês)
+        const q = query(collection(db, "avaliacoes"), where("unidade", "==", dadosUnidade.unidade));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            return Swal.fire('Sem dados', 'Nenhuma avaliação encontrada neste ano.', 'info');
+        }
+
+        let placar = {};
+        let totalAvaliacoes = {}; // Para saber quantas vezes foi avaliado (média de constância)
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (!placar[d.nome]) {
+                placar[d.nome] = 0;
+                totalAvaliacoes[d.nome] = 0;
+            }
+            placar[d.nome] += d.total;
+            totalAvaliacoes[d.nome]++;
+        });
+
+        let ranking = Object.entries(placar)
+            .sort((a, b) => b[1] - a[1])
+            .map((item, index) => {
+                let nome = item[0];
+                let pontos = item[1];
+                let icone = index === 0 ? "🏆👑" : "⭐";
+                let estilo = index === 0 ? "background:#fff3e0; border:2px solid gold;" : "border-bottom:1px solid #eee;";
+
+                return `<li style="padding:10px; ${estilo} display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="font-weight:bold; font-size:1.1rem;">${icone} ${nome}</div>
+                                <small style="color:#666;">${totalAvaliacoes[nome]} avaliações registradas</small>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="color:#E65100; font-weight:900; font-size:1.2rem;">${pontos}</div>
+                                <small>pontos</small>
+                            </div>
+                        </li>`;
+            }).join('');
+
+        Swal.fire({
+            title: '🏆 RANKING GERAL DO ANO',
+            html: `<ul style="list-style:none; padding:0; text-align:left;">${ranking}</ul>`,
+            width: 600,
+            confirmButtonText: 'Incrível!'
+        });
+
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Erro', 'Falha ao calcular ano.', 'error');
+    }
 }
