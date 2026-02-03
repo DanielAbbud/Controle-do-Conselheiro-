@@ -53,7 +53,13 @@
                     <option value="GUILHERME MILLER">GUILHERME MILLER</option>
                     <option value="DIREÇÃO">DIREÇÃO</option>
                 </select>
+
                 <input type="email" id="email-input" placeholder="📧 Seu email">
+                <small
+                    style="color: #d32f2f; font-size: 0.75rem; display: block; margin-top: -8px; margin-bottom: 8px; text-align: left;">
+                    ⚠️ Use um e-mail válido! Se esquecer a senha, o código será enviado para ele.
+                </small>
+
                 <div style="position: relative;">
                     <input type="password" id="senha-input" placeholder="🔒 Sua senha" style="padding-right: 45px;">
                     <i id="olho-senha" class="fa-solid fa-eye-slash" onclick="toggleSenha()"
@@ -93,7 +99,7 @@
                 <option value="" disabled selected>Selecione...</option>
                 <option value="THIAGO WHITE">THIAGO WHITE</option>
                 <option value="ELLEN WHITE">ELLEN WHITE</option>
-                <option value="JOSEHP BATES">JOSEHP BATES</option>
+                <option value="JOSEPH BATES">JOSEPH BATES</option>
                 <option value="RAINHA ESTER">RAINHA ESTER</option>
                 <option value="RACHEL OAKES">RACHEL OAKES</option>
                 <option value="GUILHERME MILLER">GUILHERME MILLER</option>
@@ -389,6 +395,16 @@
         </div>
 
     </div>
+
+    <div id="update-toast" class="hidden"
+        style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 9999; display: flex; align-items: center; gap: 15px; min-width: 300px;">
+        <span style="flex: 1;">🎉 Nova versão disponível!</span>
+        <button id="reload-btn"
+            style="background: #FFD700; color: #333; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+            🔄 Atualizar
+        </button>
+    </div>
+
     <footer>
         <div class="footer-links">
             <a href="politica.html" target="_blank">Política de Privacidade</a>
@@ -410,13 +426,47 @@
     <script type="module" src="script.js"></script>
 
     <script>
+        let newWorker;
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA registrado com sucesso!', reg))
-                    .catch(err => console.log('Erro ao registrar PWA:', err));
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+
+                    // 1. Monitorar se tem atualização chegando
+                    reg.addEventListener('updatefound', () => {
+                        newWorker = reg.installing;
+
+                        newWorker.addEventListener('statechange', () => {
+                            // Se o status for "installed" e já tiver um SW rodando...
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // MOSTRA O BOTÃO DE ATUALIZAR
+                                let toast = document.getElementById('update-toast');
+                                toast.classList.remove('hidden');
+                                toast.style.display = 'flex'; // Força o display flex
+                            }
+                        });
+                    });
+                });
             });
         }
+
+        // 2. Ação do botão "Atualizar"
+        document.getElementById('reload-btn').addEventListener('click', () => {
+            if (newWorker) {
+                // Manda o novo SW assumir o controle
+                newWorker.postMessage({ action: 'skipWaiting' });
+            }
+            // Recarrega a página para pegar a versão nova
+            window.location.reload();
+        });
+
+        // 3. Ouve o SW assumindo o controle (caso recarregue sozinho)
+        let refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            window.location.reload();
+            refreshing = true;
+        });
     </script>
 
 </body>
