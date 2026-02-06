@@ -361,35 +361,98 @@
         </div>
 
         <div id="modal-cadastro" class="modal hidden">
-            <div class="modal-content" style="max-width: 600px;">
-                <h3 style="color: #E65100; border-bottom: 2px solid #E65100; padding-bottom: 10px;">📋 Ficha de Cadastro
+            <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                <h3 style="color: #E65100; border-bottom: 2px solid #E65100; padding-bottom: 10px; margin-top: 0;">
+                    📋 Ficha de Cadastro
                 </h3>
-                <div class="grid-notas" style="grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-                    <div><label>Nome Completo:</label><input type="text" id="cad-nome"></div>
-                    <div><label>Nasc.:</label><input type="date" id="cad-nasc"></div>
-                    <div><label>Idade:</label><input type="number" id="cad-idade"></div>
-                </div>
-                <div class="grid-notas" style="grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label>Mãe:</label><input type="text" id="cad-mae"></div>
-                    <div><label>Celular (Mãe):</label><input type="text" id="cad-tel-mae"></div>
-                </div>
-                <div class="grid-notas" style="grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label>Pai:</label><input type="text" id="cad-pai"></div>
-                    <div><label>Celular (Pai):</label><input type="text" id="cad-tel-pai"></div>
-                </div>
-                <div class="grid-notas" style="gap: 10px;">
-                    <div style="grid-column: span 2;"><label>Endereço:</label><input type="text" id="cad-endereco">
+
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Nome Completo:</label>
+                        <input type="text" id="cad-nome" placeholder="Nome do Desbravador">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>🎖️ Cargo:</label>
+                        <select id="cad-cargo"
+                            style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: white;">
+                            <option value="Desbravador">Desbravador</option>
+                            <option value="Capitão">Capitão</option>
+                            <option value="Secretário">Secretário</option>
+                            <option value="Tesoureiro">Tesoureiro</option>
+                            <option value="Padioleiro">Padioleiro</option>
+                            <option value="Almoxarife">Almoxarife</option>
+                            <option value="Capelão">Capelão</option>
+                        </select>
                     </div>
                 </div>
-                <div class="grid-notas" style="grid-template-columns: 1fr 2fr 2fr 1fr; gap: 10px;">
-                    <div><label>Nº:</label><input type="text" id="cad-numero"></div>
-                    <div><label>Bairro:</label><input type="text" id="cad-bairro"></div>
-                    <div><label>Cidade:</label><input type="text" id="cad-cidade"></div>
-                    <div><label>UF:</label><input type="text" id="cad-uf"></div>
+
+                <div class="form-row row-small-mobile">
+                    <div class="form-group">
+                        <label>Nasc.:</label>
+                        <input type="date" id="cad-nasc">
+                    </div>
+                    <div class="form-group">
+                        <label>Idade:</label>
+                        <input type="number" id="cad-idade" placeholder="Anos">
+                    </div>
                 </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mãe:</label>
+                        <input type="text" id="cad-mae">
+                    </div>
+                    <div class="form-group">
+                        <label>Celular (Mãe):</label>
+                        <input type="text" id="cad-tel-mae" oninput="mascaraTelefone(this)"
+                            placeholder="(99) 99999-9999">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Pai:</label>
+                        <input type="text" id="cad-pai">
+                    </div>
+                    <div class="form-group">
+                        <label>Celular (Pai):</label>
+                        <input type="text" id="cad-tel-pai" oninput="mascaraTelefone(this)"
+                            placeholder="(99) 99999-9999">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Endereço (Rua):</label>
+                        <input type="text" id="cad-endereco">
+                    </div>
+                </div>
+
+                <div class="form-row row-small-mobile">
+                    <div class="form-group" style="flex: 0.5;">
+                        <label>Nº:</label>
+                        <input type="text" id="cad-numero">
+                    </div>
+                    <div class="form-group">
+                        <label>Bairro:</label>
+                        <input type="text" id="cad-bairro">
+                    </div>
+                </div>
+
+                <div class="form-row row-small-mobile">
+                    <div class="form-group">
+                        <label>Cidade:</label>
+                        <input type="text" id="cad-cidade" value="Açailândia">
+                    </div>
+                    <div class="form-group" style="flex: 0.4;">
+                        <label>UF:</label>
+                        <input type="text" id="cad-uf" value="MA">
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button onclick="salvarCadastroMembro()" class="btn btn-primary">💾 Salvar Ficha</button>
-                    <button onclick="fecharModalCadastro()" class="btn btn-danger">Cancelar</button>
+                    <button onclick="salvarCadastroMembro()" class="btn btn-primary" style="flex: 1;">💾 Salvar</button>
+                    <button onclick="fecharModalCadastro()" class="btn btn-danger" style="flex: 1;">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -437,9 +500,7 @@
                         newWorker = reg.installing;
 
                         newWorker.addEventListener('statechange', () => {
-                            // Se o status for "installed" e já tiver um SW rodando...
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // MOSTRA O BOTÃO DE ATUALIZAR
                                 let toast = document.getElementById('update-toast');
                                 toast.classList.remove('hidden');
                                 toast.style.display = 'flex'; // Força o display flex
@@ -450,17 +511,13 @@
             });
         }
 
-        // 2. Ação do botão "Atualizar"
         document.getElementById('reload-btn').addEventListener('click', () => {
             if (newWorker) {
-                // Manda o novo SW assumir o controle
                 newWorker.postMessage({ action: 'skipWaiting' });
             }
-            // Recarrega a página para pegar a versão nova
             window.location.reload();
         });
 
-        // 3. Ouve o SW assumindo o controle (caso recarregue sozinho)
         let refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;

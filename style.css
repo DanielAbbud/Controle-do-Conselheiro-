@@ -540,3 +540,32 @@ footer {
     padding: 2px 8px;
     border-radius: 10px;
 }
+
+/* --- CORREÇÃO DE FORMULÁRIO RESPONSIVO --- */
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Faz os campos dividirem o espaço igualmente */
+}
+
+/* No Celular: Faz tudo ficar um embaixo do outro */
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column; /* Empilha as linhas */
+        gap: 15px;
+        margin-bottom: 0;
+    }
+    .form-group {
+        width: 100%; /* Ocupa a largura total */
+    }
+    /* Exceção para campos pequenos como UF e Número ficarem lado a lado mesmo no celular */
+    .row-small-mobile {
+        flex-direction: row !important; 
+    }
+}
