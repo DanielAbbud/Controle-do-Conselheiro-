@@ -155,7 +155,7 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 });
 
 const ADMINS = [
-    "d254gqy6IiQZ7a8XChOgOX0Gs8f2", // Daniel 
+    "R5dbzU8OsJc21IU7cx6gPAMomrA2", // Daniel
 ];
 
 // --- MONITORAMENTO DE LOGIN E VERIFICAÇÃO DE VÍNCULO ---
