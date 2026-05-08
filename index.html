@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cantinho HF</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#E65100">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Controle DBV">
+    <link rel="apple-touch-icon" href="logo.png">
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="logo.png" alt="Brasão Heróis da Fé" class="logo-header">
+                <div>
+                    <h1 style="margin: 0;">Controle de Unidade</h1>
+                    <small id="user-name" style="display: block;"></small>
+                </div>
+            </div>
+            <button id="btn-logout" class="btn btn-logout hidden">Sair</button>
+        </div>
+    </header>
+
+    <div id="tela-login" class="container">
+        <div class="card login-card">
+            <h2 id="titulo-login">Bem-vindo!</h2>
+            <p style="color: #666; margin-bottom: 20px;">Entre com seu email ou Google.</p>
+
+            <div class="form-login">
+                <input type="text" id="nome-input" placeholder="👤 Como quer ser chamado?" class="hidden">
+
+                <select id="reg-unidade" class="hidden"
+                    style="background-color: #fff3e0; border: 1px solid #E65100; color: #E65100; font-weight: bold;">
+                    <option value="" disabled selected>🛡️ Selecione sua Unidade...</option>
+                    <option value="THIAGO WHITE">THIAGO WHITE</option>
+                    <option value="ELLEN WHITE">ELLEN WHITE</option>
+                    <option value="JOSEPH BATES">JOSEPH BATES</option>
+                    <option value="RAINHA ESTER">RAINHA ESTER</option>
+                    <option value="RACHEL OAKES">RACHEL OAKES</option>
+                    <option value="GUILHERME MILLER">GUILHERME MILLER</option>
+                    <option value="DIREÇÃO">DIREÇÃO</option>
+                </select>
+
+                <input type="email" id="email-input" placeholder="📧 Seu email">
+                <small
+                    style="color: #d32f2f; font-size: 0.75rem; display: block; margin-top: -8px; margin-bottom: 8px; text-align: left;">
+                    ⚠️ Use um e-mail válido! Se esquecer a senha, o código será enviado para ele.
+                </small>
+
+                <div style="position: relative;">
+                    <input type="password" id="senha-input" placeholder="🔒 Sua senha" style="padding-right: 45px;">
+                    <i id="olho-senha" class="fa-solid fa-eye-slash" onclick="toggleSenha()"
+                        style="position: absolute; right: 15px; top: 30%; cursor: pointer; color: #666; font-size: 1.1rem;"
+                        title="Mostrar/Esconder Senha"></i>
+                </div>
+
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <a href="#" id="btn-esqueci-senha" style="font-size: 0.85rem; color: #E65100;">Esqueci minha
+                        senha</a>
+                </div>
+
+                <div id="box-termos" class="hidden"
+                    style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 15px; text-align: left;">
+                    <input type="checkbox" id="check-termos"
+                        style="width: 18px; height: 18px; margin: 2px 0 0 0; cursor: pointer;">
+                    <label for="check-termos"
+                        style="font-size: 0.8rem; color: #666; line-height: 1.4; cursor: pointer;">
+                        Eu concordo com os <a href="termos.html" target="_blank"
+                            style="color: #E65100; font-weight: bold; text-decoration: none;">Termos de Uso</a> e a <a
+                            href="politica.html" target="_blank"
+                            style="color: #E65100; font-weight: bold; text-decoration: none;">Política de
+                            Privacidade</a>.
+                    </label>
+                </div>
+
+                <button id="btn-entrar-email" class="btn btn-primary">Entrar</button>
+                <button id="btn-criar-conta" class="btn btn-secondary hidden">Cadastrar Conta</button>
+            </div>
+
+            <p class="toggle-text">
+                <span id="txt-toggle">Não tem conta?</span>
+                <a href="#" id="link-toggle">Crie uma aqui</a>
+            </p>
+            <div class="divisor">
+                <hr> <span>OU</span>
+                <hr>
+            </div>
+            <button id="btn-login-google" class="btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Entrar com
+                Google
+            </button>
+        </div>
+    </div>
+    <div id="modal-setup-inicial" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="color: #E65100;">🛡️ Escolha sua Unidade</h3>
+            <p>Identificamos que é seu primeiro acesso. Para continuar, selecione a unidade que você lidera.</p>
+            <p style="font-size: 0.8rem; color: red;">⚠️ Atenção: Essa escolha é definitiva.</p>
+
+            <select id="google-unidade-select" style="margin-top: 15px; font-weight: bold;">
+                <option value="" disabled selected>Selecione...</option>
+                <option value="THIAGO WHITE">THIAGO WHITE</option>
+                <option value="ELLEN WHITE">ELLEN WHITE</option>
+                <option value="JOSEPH BATES">JOSEPH BATES</option>
+                <option value="RAINHA ESTER">RAINHA ESTER</option>
+                <option value="RACHEL OAKES">RACHEL OAKES</option>
+                <option value="GUILHERME MILLER">GUILHERME MILLER</option>
+                <option value="DIREÇÃO">DIREÇÃO</option>
+            </select>
+
+            <button onclick="salvarUnidadeGoogle()" class="btn btn-primary" style="margin-top: 10px;">
+                Confirmar e Entrar 🚀
+            </button>
+        </div>
+    </div>
+
+    <div id="app-principal" class="container hidden">
+        <nav>
+            <button id="nav-avaliar" class="active">📝 Avaliar</button>
+            <button id="nav-dashboard">📊 Painel</button>
+            <button id="nav-config">⚙️ Config</button>
+            <button id="nav-requisitos">🏕️ Acamp</button>
+            <button id="nav-admin" style="display:none">👮 Admin</button>
+        </nav>
+
+        <div id="sec-config" class="card hidden">
+            <h3>⚙️ Configuração da Unidade</h3>
+            <label>👤 Nome do Conselheiro:</label>
+            <input type="text" id="cfgNomeConselheiro" placeholder="Ex: Daniel Abbud">
+            <label>🛡️ Sua Unidade (Vinculada):</label>
+            <input type="text" id="cfgUnidade" placeholder="Carregando..." disabled
+                style="background-color: #eee; color: #555; cursor: not-allowed; font-weight: bold;">
+            <button onclick="salvarConfiguracao()" class="btn-salvar btn btn-secondary" style="margin-bottom: 10px;">💾
+                Salvar Nome</button>
+            <button onclick="importarMembros()" class="btn btn-primary" style="width: 100%; margin: 0;">
+                🔄 Forçar Sincronia
+            </button>
+            <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin:0;">📋 Membros da Unidade</h4>
+                    <button onclick="abrirModalCadastro()" class="btn btn-primary"
+                        style="width: auto; padding: 8px 15px; font-size: 0.9rem;">
+                        <i class="fa-solid fa-plus"></i> Novo Cadastro
+                    </button>
+                </div>
+                <ul id="lista-membros-config"
+                    style="list-style: none; padding: 0; border: 1px solid #eee; border-radius: 5px;">
+                    <li style="text-align: center; color: #999; padding: 10px;">Carregando...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="sec-admin" class="card hidden">
+            <h3 style="text-align:center; color:#333;">👮 Painel do Diretor</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
+                <button id="btn-adm-logs" onclick="alternarVisaoAdmin('logs')" class="btn btn-secondary"
+                    style="font-size: 0.9rem;">🕵️ Logs</button>
+                <button id="btn-adm-fichas" onclick="alternarVisaoAdmin('fichas')" class="btn btn-secondary"
+                    style="font-size: 0.9rem;">📂 Fichas Cadastrais</button>
+                <button id="btn-adm-camp" onclick="alternarVisaoAdmin('camp')" class="btn btn-primary"
+                    style="font-size: 0.9rem;">🔥 Acamp</button>
+            </div>
+
+            <div id="admin-view-logs" class="hidden">
+                <div
+                    style="background: #f5f5f5; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    <label style="font-weight:bold;">📅 Data:</label>
+                    <input type="date" id="filtroDataAdmin" style="padding: 5px;">
+                    <button onclick="carregarLogs()" class="btn btn-primary"
+                        style="width: auto; padding: 5px 15px;">🔍</button>
+                </div>
+                <ul id="lista-logs" style="padding:0; list-style:none;"></ul>
+            </div>
+
+            <div id="admin-view-fichas" class="hidden">
+                <div id="lista-fichas-global">Carregando fichas...</div>
+            </div>
+
+            <div id="admin-view-camp">
+                <div
+                    style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #E65100;">
+                    <h4 style="margin-top: 0; color: #E65100;">➕ Criar Novo Requisito</h4>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <select id="novo-req-categoria"
+                            style="flex: 1; margin: 0; border: 1px solid #ddd; border-radius: 8px; padding: 12px; background: #fff;">
+                            <option value="" disabled selected>Selecione a Categoria...</option>
+                        </select>
+                        <button onclick="adicionarNovaCategoria()" class="btn btn-secondary"
+                            style="width: auto; margin: 0; padding: 0 15px; font-size: 1.2rem;"
+                            title="Criar Nova Categoria">➕</button>
+                        <input type="number" id="novo-req-pontos" placeholder="Pts (Ex: 600)"
+                            style="width: 100px; margin: 0;">
+                    </div>
+
+                    <input type="text" id="novo-req-titulo" placeholder="Título (Ex: Cesta Básica)"
+                        style="margin-bottom: 10px;">
+                    <textarea id="novo-req-desc" rows="2"
+                        placeholder="O que eles precisam fazer para cumprir?"></textarea>
+                    <button onclick="criarRequisito()" class="btn btn-primary"
+                        style="margin-top: 10px; width: auto; padding: 8px 15px;">Salvar Requisito</button>
+                </div>
+                <h4>⏳ Pendências de Aprovação</h4>
+                <div id="lista-aprovacao-camp"></div>
+            </div>
+        </div>
+
+        <div id="sec-avaliar" class="card">
+            <h3>Nova Avaliação</h3>
+            <div class="grid-notas" style="margin-bottom: 10px; grid-template-columns: 1fr 1fr;">
+                <select id="selMes">
+                    <option>Janeiro</option>
+                    <option>Fevereiro</option>
+                    <option>Março</option>
+                    <option>Abril</option>
+                    <option>Maio</option>
+                    <option>Junho</option>
+                    <option>Julho</option>
+                    <option>Agosto</option>
+                    <option>Setembro</option>
+                    <option>Outubro</option>
+                    <option>Novembro</option>
+                    <option>Dezembro</option>
+                </select>
+                <select id="selSemana">
+                    <option>Semana 1</option>
+                    <option>Semana 2</option>
+                    <option>Semana 3</option>
+                    <option>Semana 4</option>
+                </select>
+            </div>
+            <div
+                style="background: #fff3e0; padding: 15px; border-radius: 8px; border: 1px solid #ffe0b2; margin-bottom: 20px;">
+                <p style="font-weight:bold; color:#E65100; margin-bottom:5px;">Opção A: Fazer Todos</p>
+                <button id="btn-iniciar" class="btn btn-primary" style="margin-bottom: 15px;">▶️ Iniciar Sequência (Do
+                    1º ao Último)</button>
+                <div class="divisor" style="margin: 10px 0;">
+                    <hr><span>OU</span>
+                    <hr>
+                </div>
+                <p style="font-weight:bold; color:#1565C0; margin-bottom:5px;">Opção B: Corrigir / Avaliar Um</p>
+                <div style="display: flex; gap: 10px;">
+                    <select id="selMembroCorrecao" style="margin:0; flex-grow: 1;">
+                        <option value="">Selecione...</option>
+                    </select>
+                    <button id="btn-corrigir" class="btn btn-secondary"
+                        style="width: auto; margin:0; white-space: nowrap;"><i class="fa-solid fa-pencil"></i>
+                        Ir</button>
+                </div>
+            </div>
+
+            <div id="tabela-regras" class="regras-box">
+                <h4>📋 Critérios de Avaliação</h4>
+                <div class="regras-grid">
+                    <div class="regra-item"><strong>01. Frequência</strong><span>Presente: 30 | Atrasado: 15 | Falta:
+                            0</span></div>
+                    <div class="regra-item"><strong>02. Devoção Matinal</strong><span>Completo: 40 | Incompleto: 20 |
+                            Não fez: 0</span></div>
+                    <div class="regra-item"><strong>03. Uniforme</strong><span>Completo: 50 | Incompleto: 20 | Sem:
+                            0</span></div>
+                    <div class="regra-item"><strong>04. Higiene</strong><span>Alinhado: 30 | Desalinhado: 15 </span>
+                    </div>
+                    <div class="regra-item"><strong>05. Classe Bíblica</strong><span>Presente: 50 | Atrasado: 25 |
+                            Falta: 0</span></div>
+                    <div class="regra-item"><strong>06. Ano Bíblico</strong><span>Em Dia: 40 | Atrasado: 20 | Não leu:
+                            0</span></div>
+                    <div class="regra-item"><strong>07. Materiais</strong><span>Completo: 40 | Falta Item: 20 | Sem:
+                            0</span></div>
+                    <div class="regra-item"><strong>08. Disciplina</strong><span>Exemplar: 40 | Indisciplina: 0</span>
+                    </div>
+                </div>
+                <p class="nota-rodape">Pontuação Máxima Semanal: <strong>320 pontos</strong></p>
+            </div>
+
+            <div id="wizard-form" class="hidden"
+                style="margin-top: 20px; border-top: 2px dashed #E65100; padding-top: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h2 id="wiz-nome" style="color: #E65100; margin:0;">Nome do Membro</h2>
+                    <span style="font-size:0.8rem; color:#999;" id="contador-passo"></span>
+                </div>
+                <div class="grid-notas">
+                    <div><small>01 Frequencia</small><input type="number" id="n1" placeholder="Max 30"></div>
+                    <div><small>02 Devoção Matinal</small><input type="number" id="n2" placeholder="Max 40"></div>
+                    <div><small>03 Uniforme</small><input type="number" id="n3" placeholder="Max 50"></div>
+                    <div><small>04 Higiene</small><input type="number" id="n4" placeholder="Max 30"></div>
+                    <div><small>05 Classe Biblica</small><input type="number" id="n5" placeholder="Max 50"></div>
+                    <div><small>06 Ano Bíblico</small><input type="number" id="n6" placeholder="Max 40"></div>
+                    <div><small>07 Materiais</small><input type="number" id="n7" placeholder="Max 40"></div>
+                    <div><small>08 Disciplina</small><input type="number" id="n8" placeholder="Max 40"></div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top: 15px;">
+                    <button id="btn-proximo" class="btn btn-primary">Salvar e Próximo ➡️</button>
+                    <button onclick="fecharWizard()" class="btn btn-secondary"
+                        style="margin:0; border:none; color:#666;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-dashboard" class="hidden">
+            <div class="card" style="text-align: center; background: #fff3e0;">
+                <div class="grid-notas" style="margin-bottom: 0;">
+                    <select id="dashMes" onchange="atualizarDashboard()">
+                        <option>Janeiro</option>
+                        <option>Fevereiro</option>
+                        <option>Março</option>
+                        <option>Abril</option>
+                        <option>Maio</option>
+                        <option>Junho</option>
+                        <option>Julho</option>
+                        <option>Agosto</option>
+                        <option>Setembro</option>
+                        <option>Outubro</option>
+                        <option>Novembro</option>
+                        <option>Dezembro</option>
+                    </select>
+                    <select id="dashSemana" onchange="atualizarDashboard()">
+                        <option>Semana 1</option>
+                        <option>Semana 2</option>
+                        <option>Semana 3</option>
+                        <option>Semana 4</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="verRelatorioMensal()" class="btn btn-secondary"
+                        style="font-size: 0.85rem; width: auto; padding: 8px 15px;">📊 Fechar Mês</button>
+                    <button id="btnRankingAnual" onclick="verRankingAnual()" class="btn btn-primary"
+                        style="display: none; font-size: 0.85rem; width: auto; padding: 8px 15px; background: gold; color: #333; border: 1px solid #d4af37; box-shadow: 0 4px 6px rgba(212, 175, 55, 0.4);">🏆
+                        Ranking Anual (Excelência)</button>
+                </div>
+            </div>
+
+            <div id="card-destaque" class="card" style="text-align: center; background: #e3f2fd; display: none;">
+                <h3 style="color: #1565c0; margin: 0;">🌟 Destaque da Semana</h3>
+                <p style="font-size: 1.3rem; margin: 15px 0 5px 0;"><strong id="nome-destaque">---</strong></p>
+                <small style="color: #1565c0; font-weight: bold;"><span id="pontos-destaque">0</span> pontos</small>
+            </div>
+
+            <div class="card">
+                <h3 style="text-align: center;">Desempenho Geral</h3>
+                <div class="chart-container">
+                    <div class="pie-chart" id="grafico-geral"></div>
+                    <div class="legenda-grafico" id="legenda-geral"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Pontuações da Unidade</h3>
+                <div id="lista-dashboard">Carregando...</div>
+            </div>
+        </div>
+
+        <div id="modal-detalhes" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="titulo-detalhe">Detalhes</h3>
+                <div class="chart-container">
+                    <div class="pie-chart" id="grafico-individual"></div>
+                </div>
+                <h4>Histórico:</h4>
+                <ul id="lista-historico" style="padding:0; list-style:none;"></ul>
+                <button onclick="fecharDetalhes()" class="btn btn-danger">Fechar</button>
+            </div>
+        </div>
+
+        <div id="modal-ficha" class="modal hidden" style="align-items: center; justify-content: center;">
+            <div class="modal-content" style="max-width: 500px; padding: 0; overflow: hidden;">
+                <div id="header-ficha" style="background: #E65100; color: white; padding: 15px; text-align: left;">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; opacity: 0.9;">Unidade:</div>
+                    <div id="ficha-unidade" style="font-size: 1.2rem; font-weight: bold;">---</div>
+                </div>
+                <div id="corpo-ficha" style="padding: 20px; text-align: left; font-size: 0.95rem; color: #333;">
+                    Carregando...</div>
+                <div style="padding: 15px; text-align: right; background: #f9f9f9; border-top: 1px solid #eee;">
+                    <button onclick="document.getElementById('modal-ficha').classList.add('hidden')"
+                        class="btn btn-secondary" style="width: auto;">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-cadastro" class="modal hidden">
+            <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                <h3 style="color: #E65100; border-bottom: 2px solid #E65100; padding-bottom: 10px; margin-top: 0;">📋
+                    Ficha de Cadastro</h3>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;"><label>Nome Completo:</label><input type="text"
+                            id="cad-nome" placeholder="Nome do Desbravador"></div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>🎖️ Cargo:</label>
+                        <select id="cad-cargo"
+                            style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: white;">
+                            <option value="Desbravador">Desbravador</option>
+                            <option value="Capitão">Capitão</option>
+                            <option value="Secretário">Secretário</option>
+                            <option value="Tesoureiro">Tesoureiro</option>
+                            <option value="Padioleiro">Padioleiro</option>
+                            <option value="Almoxarife">Almoxarife</option>
+                            <option value="Capelão">Capelão</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row row-small-mobile">
+                    <div class="form-group"><label>Nasc.:</label><input type="date" id="cad-nasc"></div>
+                    <div class="form-group"><label>Idade:</label><input type="number" id="cad-idade" placeholder="Anos">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Mãe:</label><input type="text" id="cad-mae"></div>
+                    <div class="form-group"><label>Celular (Mãe):</label><input type="text" id="cad-tel-mae"
+                            placeholder="(99) 99999-9999"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Pai:</label><input type="text" id="cad-pai"></div>
+                    <div class="form-group"><label>Celular (Pai):</label><input type="text" id="cad-tel-pai"
+                            placeholder="(99) 99999-9999"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Endereço (Rua):</label><input type="text" id="cad-endereco"></div>
+                </div>
+                <div class="form-row row-small-mobile">
+                    <div class="form-group" style="flex: 0.5;"><label>Nº:</label><input type="text" id="cad-numero">
+                    </div>
+                    <div class="form-group"><label>Bairro:</label><input type="text" id="cad-bairro"></div>
+                </div>
+                <div class="form-row row-small-mobile">
+                    <div class="form-group"><label>Cidade:</label><input type="text" id="cad-cidade" value="Açailândia">
+                    </div>
+                    <div class="form-group" style="flex: 0.4;"><label>UF:</label><input type="text" id="cad-uf"
+                            value="MA"></div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="salvarCadastroMembro()" class="btn btn-primary" style="flex: 1;">💾 Salvar</button>
+                    <button onclick="fecharModalCadastro()" class="btn btn-danger" style="flex: 1;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-requisitos" class="hidden" style="background: transparent; box-shadow: none; padding: 0;">
+
+            <div class="acamp-panel">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <h3 style="color: #E65100; margin: 0;">🏆 Progresso da Unidade</h3>
+                    <div id="acamp-estrelas" style="color: #666; font-weight: bold;">⭐ N/A</div>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-bottom: 5px;">
+                    <span id="acamp-texto-pontos">Calculando...</span>
+                    <span id="acamp-texto-porcentagem" style="font-weight: bold; color: #E65100;">0%</span>
+                </div>
+                <div class="acamp-progress-bg">
+                    <div id="acamp-progress-bar" class="acamp-progress-fill"></div>
+                </div>
+                <div class="acamp-legendas">
+                    <div class="acamp-legenda-box">
+                        <span style="color: #888;">⭐⭐⭐</span><br>
+                        <small>Até 59%</small><br>
+                        <strong>3 ESTRELAS</strong>
+                    </div>
+                    <div class="acamp-legenda-box">
+                        <span style="color: #FF9800;">⭐⭐⭐⭐</span><br>
+                        <small>60% a 79%</small><br>
+                        <strong>4 ESTRELAS</strong>
+                    </div>
+                    <div class="acamp-legenda-box destaque">
+                        <span style="color: #E65100;">⭐⭐⭐⭐⭐</span><br>
+                        <small>80% a 100%</small><br>
+                        <strong>5 ESTRELAS</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="acamp-panel">
+                <h3 style="color: #E65100; margin-top: 0;">🎯 Requisitos & Desafios</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Envie comprovantes e ganhe pontos para
+                    sua unidade.</p>
+                <div id="lista-requisitos-cards">
+                    <p style="color:#888;">Carregando desafios...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-envio-req" class="modal hidden">
+            <div class="modal-content" style="background: #fff; color: #333;">
+                <h3 id="modal-req-titulo" style="color: #E65100; margin-top: 0;">Enviando Comprovante</h3>
+                <input type="hidden" id="modal-req-nome">
+
+                <label style="color: #666; font-weight: bold;">📝 Relatório da Atividade:</label>
+                <textarea id="modal-req-relato" rows="3" placeholder="O que fizeram para cumprir este requisito?"
+                    style="background: #fafafa; color: #333; border: 1px solid #ddd; width: 100%;"></textarea>
+
+                <label style="color: #666; font-weight: bold; margin-top: 10px; display: block;">📸 Foto
+                    Comprobatória:</label>
+                <input type="file" id="modal-req-foto" accept="image/*"
+                    style="background: #fafafa; color: #333; border: 1px solid #ddd; width: 100%;">
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="confirmarEnvioRequisito()" class="btn btn-primary" style="flex: 1;">🚀
+                        Enviar</button>
+                    <button onclick="document.getElementById('modal-envio-req').classList.add('hidden')"
+                        class="btn btn-secondary" style="flex: 1;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="update-toast" class="hidden"
+        style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 9999; display: flex; align-items: center; gap: 15px; min-width: 300px;">
+        <span style="flex: 1;">🎉 Nova versão disponível!</span>
+        <button id="reload-btn"
+            style="background: #FFD700; color: #333; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+            🔄 Atualizar
+        </button>
+    </div>
+
+    <footer>
+        <div class="footer-links">
+            <a href="politica.html" target="_blank">Política de Privacidade</a>
+            <span style="opacity: 0.5;">•</span>
+            <a href="termos.html" target="_blank">Termos de Uso</a>
+        </div>
+        <p style="margin: 10px 0; font-size: 0.85rem; opacity: 0.9;">
+            © 2026 Clube Heróis da Fé. Todos os direitos reservados.
+        </p>
+        <p class="credits">
+            Desenvolvido com <i class="fa-solid fa-heart" style="color: #fff;"></i> por <strong>Daniel Quintela</strong>
+        </p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script type="module" src="script.js"></script>
+
+    <script>
+        let newWorker;
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    reg.addEventListener('updatefound', () => {
+                        newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                let toast = document.getElementById('update-toast');
+                                toast.classList.remove('hidden');
+                                toast.style.display = 'flex';
+                            }
+                        });
+                    });
+                });
+            });
+        }
+        document.getElementById('reload-btn').addEventListener('click', () => {
+            if (newWorker) newWorker.postMessage({ action: 'skipWaiting' });
+            window.location.reload();
+        });
+        let refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            window.location.reload();
+            refreshing = true;
+        });
+    </script>
+
+</body>
+
+</html>

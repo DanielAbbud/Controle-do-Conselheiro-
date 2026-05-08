@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha - Heróis da Fé</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <header style="justify-content: center; text-align: center;">
+        <div class="header-content" style="justify-content: center;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="logo.png" alt="Brasão" class="logo-header">
+                <h1 style="margin: 0;">Heróis da Fé</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="margin-top: 50px;">
+        <div class="card login-card" style="max-width: 400px; margin: 0 auto;">
+            <h2 style="color: #E65100; margin-bottom: 10px;">Nova Senha</h2>
+            <p style="color: #666; margin-bottom: 20px;">Digite sua nova senha abaixo.</p>
+
+            <div class="form-login">
+                <div style="position: relative; margin-bottom: 15px;">
+                    <input type="password" id="nova-senha" placeholder="🔒 Nova Senha" style="padding-right: 45px;">
+                    <i id="olho-senha" class="fa-solid fa-eye-slash" onclick="toggleSenha()"
+                        style="position: absolute; right: 15px; top: 30%; cursor: pointer; color: #666;"
+                        title="Ver Senha"></i>
+                </div>
+
+                <button id="btn-salvar-senha" class="btn btn-primary">💾 Salvar Nova Senha</button>
+            </div>
+
+            <p style="margin-top: 20px;">
+                <a href="index.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Voltar ao
+                    Login</a>
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <p style="opacity: 0.8; font-size: 0.8rem;">Sistema de Controle de Unidade</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // SUA CONFIGURAÇÃO (A MESMA DO SCRIPT.JS)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuorMQnlj-SCwFsPOEBKnqj2im6VVLcHk",
+            authDomain: "controle-de-unidade.firebaseapp.com",
+            projectId: "controle-de-unidade",
+            storageBucket: "controle-de-unidade.firebasestorage.app",
+            messagingSenderId: "344553489715",
+            appId: "1:344553489715:web:fa19c9387e4e32688b2a46"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // PEGAR O CÓDIGO MÁGICO DA URL (OOBCODE)
+        const urlParams = new URLSearchParams(window.location.search);
+        const oobCode = urlParams.get('oobCode');
+
+        // FUNÇÃO DE MOSTRAR SENHA
+        window.toggleSenha = function () {
+            const input = document.getElementById('nova-senha');
+            const olho = document.getElementById('olho-senha');
+            if (input.type === "password") {
+                input.type = "text";
+                olho.classList.replace('fa-eye-slash', 'fa-eye');
+            } else {
+                input.type = "password";
+                olho.classList.replace('fa-eye', 'fa-eye-slash');
+            }
+        }
+
+        // SALVAR A SENHA
+        document.getElementById('btn-salvar-senha').addEventListener('click', () => {
+            const newPassword = document.getElementById('nova-senha').value;
+
+            if (!newPassword || newPassword.length < 6) {
+                return Swal.fire('Erro', 'A senha deve ter pelo menos 6 caracteres.', 'warning');
+            }
+
+            if (!oobCode) {
+                return Swal.fire('Erro', 'Link inválido ou expirado. Peça para redefinir novamente.', 'error');
+            }
+
+            // COMANDO DO FIREBASE PARA TROCAR A SENHA
+            confirmPasswordReset(auth, oobCode, newPassword)
+                .then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Senha Alterada!',
+                        text: 'Agora você pode fazer login com a nova senha.',
+                        confirmButtonColor: '#E65100'
+                    }).then(() => {
+                        window.location.href = "index.html"; // Manda de volta pro login
+                    });
+                })
+                .catch((error) => {
+                    console.error(error);
+                    Swal.fire('Erro', 'Link expirado ou inválido. Tente pedir a redefinição de novo.', 'error');
+                });
+        });
+    </script>
+</body>
+
+</html>
