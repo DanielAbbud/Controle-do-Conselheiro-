@@ -104,6 +104,7 @@
             </button>
         </div>
     </div>
+
     <div id="modal-setup-inicial" class="modal hidden" style="z-index: 2000;">
         <div class="modal-content" style="text-align: center;">
             <h3 style="color: #E65100;">🛡️ Escolha sua Unidade</h3>
@@ -145,9 +146,8 @@
                 style="background-color: #eee; color: #555; cursor: not-allowed; font-weight: bold;">
             <button onclick="salvarConfiguracao()" class="btn-salvar btn btn-secondary" style="margin-bottom: 10px;">💾
                 Salvar Nome</button>
-            <button onclick="importarMembros()" class="btn btn-primary" style="width: 100%; margin: 0;">
-                🔄 Forçar Sincronia
-            </button>
+            <button onclick="importarMembros()" class="btn btn-primary" style="width: 100%; margin: 0;">🔄 Forçar
+                Sincronia</button>
             <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin:0;">📋 Membros da Unidade</h4>
@@ -190,6 +190,7 @@
             </div>
 
             <div id="admin-view-camp">
+
                 <div
                     style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #E65100;">
                     <h4 style="margin-top: 0; color: #E65100;">➕ Criar Novo Requisito</h4>
@@ -202,7 +203,7 @@
                         <button onclick="adicionarNovaCategoria()" class="btn btn-secondary"
                             style="width: auto; margin: 0; padding: 0 15px; font-size: 1.2rem;"
                             title="Criar Nova Categoria">➕</button>
-                        <input type="number" id="novo-req-pontos" placeholder="Pts (Ex: 600)"
+                        <input type="number" id="novo-req-pontos" placeholder="Pts (Ex: 60)"
                             style="width: 100px; margin: 0;">
                     </div>
 
@@ -213,8 +214,36 @@
                     <button onclick="criarRequisito()" class="btn btn-primary"
                         style="margin-top: 10px; width: auto; padding: 8px 15px;">Salvar Requisito</button>
                 </div>
-                <h4>⏳ Pendências de Aprovação</h4>
-                <div id="lista-aprovacao-camp"></div>
+
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+                <h4 style="color: #333; margin-bottom: 15px;">🔍 Raio-X das Unidades</h4>
+                <div style="margin-bottom: 15px;">
+                    <select id="adm-filtro-unidade" onchange="carregarGestaoCampamento()"
+                        style="width: 100%; padding: 10px; font-weight: bold; color: #E65100; border: 2px solid #E65100; border-radius: 8px;">
+                        <option value="TODAS">🔥 Fila Geral (Só pendentes de todas as unidades)</option>
+                        <option value="THIAGO WHITE">🛡️ Analisar: THIAGO WHITE</option>
+                        <option value="ELLEN WHITE">🛡️ Analisar: ELLEN WHITE</option>
+                        <option value="JOSEPH BATES">🛡️ Analisar: JOSEPH BATES</option>
+                        <option value="RAINHA ESTER">🛡️ Analisar: RAINHA ESTER</option>
+                        <option value="RACHEL OAKES">🛡️ Analisar: RACHEL OAKES</option>
+                        <option value="GUILHERME MILLER">🛡️ Analisar: GUILHERME MILLER</option>
+                    </select>
+                </div>
+
+                <div id="lista-gestao-camp">
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #333; margin-bottom: 10px;">📋 Requisitos Cadastrados (Geral)</h4>
+                    <div id="lista-requisitos-admin"
+                        style="max-height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa;">
+                        Carregando requisitos...
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -480,6 +509,14 @@
                 </div>
             </div>
 
+            <div class="gog-banner">
+                <div class="gog-icon-wrapper"><i class="fa-solid fa-file-lines"></i></div>
+                <h3 class="gog-title">GOG - GUIA DE ORIENTAÇÕES GERAIS</h3>
+                <p class="gog-text">Acesse o Guia de Orientações Gerais com todas as regras, pontuações, e informações essenciais para a participação do
+                XXIII MiniCamping do Clube Heróis da Fé</p>
+                <a href="GOG.HF.2026.pdf" target="_blank" class="btn-gog"><i class="fa-solid fa-download"></i> BAIXAR O
+                    GOG</a>
+            </div>
             <div class="acamp-panel">
                 <h3 style="color: #E65100; margin-top: 0;">🎯 Requisitos & Desafios</h3>
                 <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Envie comprovantes e ganhe pontos para

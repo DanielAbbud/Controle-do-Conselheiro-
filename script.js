@@ -35,8 +35,7 @@ const coresGrafico = ['#FF5722', '#FFC107', '#4CAF50', '#03A9F4', '#9C27B0', '#E
 // LISTA DE ADMINS (UIDs do Firebase)
 const ADMINS = [
     "R5dbzU8OsJc21IU7cx6gPAMomrA2", // Daniel Quintela
-    "KqLW3du260VOg3x9XBNWvr5bNLf2",  // Sergio Lima
-    "OCwBHmcrpjWSWjOfIr7Y5cCUBZx1" // Email teste
+    "KqLW3du260V0g3x9XBNWvr5bNLf2"  // Sergio Lima
 ];
 
 const Toast = Swal.mixin({
@@ -79,12 +78,10 @@ document.getElementById('btn-entrar-email').addEventListener('click', () => {
 document.getElementById('btn-criar-conta').addEventListener('click', async () => {
     const nome = document.getElementById('nome-input').value; const email = document.getElementById('email-input').value;
     const senha = document.getElementById('senha-input').value; const unidadeSelecionada = document.getElementById('reg-unidade').value;
-    const termosAceitos = document.getElementById('check-termos').checked; // Vê se marcou a caixinha
+    const termosAceitos = document.getElementById('check-termos').checked;
 
     if (!nome) return Swal.fire('Erro', 'Digite seu nome', 'warning');
     if (!unidadeSelecionada) return Swal.fire('Erro', 'Selecione sua unidade!', 'warning');
-
-    // A TRAVA AQUI: Se não marcou, não passa!
     if (!termosAceitos) return Swal.fire('Atenção', 'Você precisa aceitar os Termos de Uso e a Política de Privacidade para criar sua conta!', 'warning');
 
     try {
@@ -117,8 +114,6 @@ onAuthStateChanged(auth, async (user) => {
             document.getElementById('nav-admin').style.display = ADMINS.includes(user.uid) ? "inline-block" : "none";
             carregarConfiguracao(); configurarPeriodoAtual();
         }
-
-        Swal.fire('Debug UID', 'O seu UID é: ' + user.uid, 'info');
     } else {
         userAtual = null; document.getElementById('tela-login').classList.remove('hidden'); document.getElementById('app-principal').classList.add('hidden');
         document.getElementById('app-principal').style.display = 'none'; document.getElementById('btn-logout').classList.add('hidden'); document.getElementById('modal-setup-inicial').classList.add('hidden');
@@ -382,8 +377,7 @@ window.navegar = (aba) => {
 
     if (aba === 'dashboard') atualizarDashboard();
     if (aba === 'admin') {
-        alternarVisaoAdmin('camp'); // Padrao abre aba campamento no admin
-        if (typeof carregarCategoriasAdmin === 'function') carregarCategoriasAdmin(); // Garante que a lista carregue
+        alternarVisaoAdmin('camp');
     }
     if (aba === 'requisitos') {
         if (typeof carregarRequisitosDisponiveis === 'function') carregarRequisitosDisponiveis();
@@ -408,34 +402,25 @@ if (btnEsqueci) {
 // ADMINISTRAÇÃO E LOGS
 // =========================================
 window.alternarVisaoAdmin = (visao) => {
-    // 1. Esconde todas as telas
     document.getElementById('admin-view-logs').classList.add('hidden');
     document.getElementById('admin-view-fichas').classList.add('hidden');
     const viewCamp = document.getElementById('admin-view-camp'); if (viewCamp) viewCamp.classList.add('hidden');
 
-    // 2. Reseta todos os botões para branco (btn-secondary)
     ['logs', 'fichas', 'camp'].forEach(id => {
         const btn = document.getElementById('btn-adm-' + id);
-        if (btn) {
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-secondary');
-        }
+        if (btn) { btn.classList.remove('btn-primary'); btn.classList.add('btn-secondary'); }
     });
 
-    // 3. Pinta o botão clicado de Laranja (btn-primary)
     const btnAtivo = document.getElementById('btn-adm-' + visao);
-    if (btnAtivo) {
-        btnAtivo.classList.remove('btn-secondary');
-        btnAtivo.classList.add('btn-primary');
-    }
+    if (btnAtivo) { btnAtivo.classList.remove('btn-secondary'); btnAtivo.classList.add('btn-primary'); }
 
-    // 4. Mostra a tela correta e carrega os dados
     if (visao === 'logs') { document.getElementById('admin-view-logs').classList.remove('hidden'); carregarLogs(); }
     if (visao === 'fichas') { document.getElementById('admin-view-fichas').classList.remove('hidden'); carregarFichasGeral(); }
     if (visao === 'camp') {
         document.getElementById('admin-view-camp').classList.remove('hidden');
-        carregarAprovacaoCampamento();
+        carregarGestaoCampamento();
         if (typeof carregarCategoriasAdmin === 'function') carregarCategoriasAdmin();
+        if (typeof carregarRequisitosAdmin === 'function') carregarRequisitosAdmin();
     }
 }
 
@@ -591,24 +576,23 @@ window.adicionarNovaCategoria = async () => {
 window.criarRequisito = async () => {
     const titulo = document.getElementById('novo-req-titulo').value.trim();
     const desc = document.getElementById('novo-req-desc').value.trim();
-    const categoria = document.getElementById('novo-req-categoria').value;
+    const categoria = document.getElementById('novo-req-categoria').value.trim() || "Geral";
     const pontos = Number(document.getElementById('novo-req-pontos').value) || 0;
 
-    if (!categoria) return Swal.fire('Atenção', 'Selecione ou crie uma Categoria primeiro!', 'warning');
     if (!titulo) return Swal.fire('Atenção', 'Digite o título do requisito!', 'warning');
-
     Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
     try {
         await addDoc(collection(db, "requisitos_cadastrados"), {
             titulo, descricao: desc, categoria, pontos, data_criacao: new Date().toISOString()
         });
-        Swal.fire({ icon: 'success', title: 'Salvo!', timer: 1500, showConfirmButton: false });
+        Swal.fire('Pronto!', 'Criado com sucesso.', 'success');
 
         document.getElementById('novo-req-titulo').value = "";
         document.getElementById('novo-req-desc').value = "";
         document.getElementById('novo-req-pontos').value = "";
 
         carregarCategoriasAdmin();
+        carregarRequisitosAdmin();
     } catch (e) { Swal.fire('Erro', e.message, 'error'); }
 }
 
@@ -618,16 +602,18 @@ window.carregarRequisitosDisponiveis = async () => {
     divLista.innerHTML = "Carregando...";
 
     try {
+        // 1. Busca os que já enviou e soma pontos aprovados
         const snapEnvios = await getDocs(query(collection(db, "requisitos_campamento"), where("unidade", "==", dadosUnidade.unidade)));
-        let statusEnvios = {};
+        let statusEnvios = {}; // Guarda o status de cada título
         let pontosConquistados = 0;
 
         snapEnvios.forEach(doc => {
             const d = doc.data();
-            statusEnvios[d.titulo] = d.status;
+            statusEnvios[d.titulo] = d.status; // "Pendente" ou "Aprovado"
             if (d.status === "Aprovado" && d.pontos) pontosConquistados += d.pontos;
         });
 
+        // 2. Atualiza a Barra de Progresso
         const META_PONTOS = 10000;
         let porcentagemFloat = (pontosConquistados / META_PONTOS) * 100;
         let porcentagem = Math.min(porcentagemFloat, 100).toFixed(1);
@@ -636,6 +622,7 @@ window.carregarRequisitosDisponiveis = async () => {
         document.getElementById('acamp-texto-porcentagem').innerText = `${porcentagem}%`;
         document.getElementById('acamp-progress-bar').style.width = `${porcentagem}%`;
 
+        // 3. Define Estrelas
         let txtEstrelas = "⭐ 1 ESTRELA";
         if (porcentagemFloat >= 80) {
             txtEstrelas = "⭐⭐⭐⭐⭐ 5 ESTRELAS";
@@ -646,6 +633,7 @@ window.carregarRequisitosDisponiveis = async () => {
 
         document.getElementById('acamp-estrelas').innerText = txtEstrelas;
 
+        // 4. Busca todos do painel
         const snap = await getDocs(query(collection(db, "requisitos_cadastrados"), orderBy("categoria")));
         if (snap.empty) { divLista.innerHTML = "<p>Nenhum requisito cadastrado.</p>"; return; }
 
@@ -663,7 +651,7 @@ window.carregarRequisitosDisponiveis = async () => {
             const status = statusEnvios[d.titulo];
             let txtBotao = "↑ Enviar";
             let btnDisabled = "";
-            let corStatus = "#666";
+            let corStatus = "#666"; // Cinza padrão
 
             if (status === "Pendente") { txtBotao = "⏳ Em Análise"; btnDisabled = "disabled"; corStatus = "#FF9800"; }
             else if (status === "Aprovado") { txtBotao = "✅ Concluído"; btnDisabled = "disabled"; corStatus = "#4CAF50"; }
@@ -719,29 +707,206 @@ window.confirmarEnvioRequisito = async () => {
     } catch (e) { Swal.fire('Erro', e.message, 'error'); }
 }
 
-window.carregarAprovacaoCampamento = async () => {
-    const div = document.getElementById('lista-aprovacao-camp');
-    div.innerHTML = "Carregando...";
-    const snap = await getDocs(query(collection(db, "requisitos_campamento"), where("status", "==", "Pendente")));
-    div.innerHTML = snap.empty ? "<p style='text-align:center;'>Nenhum requisito pendente!</p>" : "";
-    snap.forEach(dSnap => {
-        const d = dSnap.data();
-        div.innerHTML += `<div class="card" style="border:1px solid #ddd; padding-bottom: 15px;">
-            <p><b>🛡️ Unidade:</b> ${d.unidade}</p>
-            <p><b>🎯 Requisito:</b> ${d.titulo} (${d.pontos || 0} pts)</p>
-            <p style="background:#eee; padding:10px; border-radius:8px; font-size:0.9rem;">${d.relato}</p>
-            <img src="${d.foto}" class="acamp-foto-miniatura" onclick="expandirFoto('${d.foto}')">
-            <button onclick="aprovarReq('${dSnap.id}')" class="btn btn-primary" style="background:green;">✅ Aprovar Requisito</button>
-        </div>`;
-    });
+// --- GESTÃO DOS REQUISITOS CADASTRADOS (ADMIN) ---
+window.carregarRequisitosAdmin = async () => {
+    const div = document.getElementById('lista-requisitos-admin');
+    if (!div) return;
+    div.innerHTML = "<p style='color:#888; text-align:center;'>Carregando...</p>";
+    try {
+        const snap = await getDocs(query(collection(db, "requisitos_cadastrados"), orderBy("categoria")));
+        if (snap.empty) {
+            div.innerHTML = "<p style='color:#888; font-size:0.9rem; text-align:center;'>Nenhum requisito criado para o acampamento ainda.</p>";
+            return;
+        }
+
+        let html = "";
+        let catAtual = "";
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.categoria !== catAtual) {
+                catAtual = d.categoria;
+                html += `<div style="font-weight:bold; color:#E65100; margin-top:15px; margin-bottom:5px; border-bottom:1px solid #ccc; font-size:0.9rem;">📂 ${catAtual}</div>`;
+            }
+            html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 5px; border-bottom: 1px dashed #e0e0e0; background: #fff;">
+                <div style="line-height: 1.2;">
+                    <span style="font-size:0.9rem; color:#333; font-weight:600;">${d.titulo}</span>
+                    <span style="font-size:0.75rem; color:#888; margin-left:5px; background: #eee; padding: 2px 6px; border-radius: 8px;">${d.pontos} pts</span>
+                </div>
+                <button onclick="excluirRequisitoCadastrado('${doc.id}')" style="background:none; border:none; color:#d32f2f; cursor:pointer; padding:5px;" title="Excluir Requisito">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>`;
+        });
+        div.innerHTML = html;
+    } catch (e) {
+        div.innerHTML = "<p style='color:red;'>Erro ao carregar lista.</p>";
+        console.error(e);
+    }
 }
 
-window.aprovarReq = async (id) => {
-    const confirm = await Swal.fire({ title: 'Aprovar este requisito?', showCancelButton: true, confirmButtonText: 'Sim' });
+window.excluirRequisitoCadastrado = async (id) => {
+    const res = await Swal.fire({
+        title: 'Excluir Requisito?',
+        text: 'Este requisito desaparecerá do painel de todas as unidades. Os envios antigos que já foram aprovados não serão apagados.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, excluir',
+        confirmButtonColor: '#d33'
+    });
+    if (res.isConfirmed) {
+        try {
+            await deleteDoc(doc(db, "requisitos_cadastrados", id));
+            Toast.fire({ icon: 'success', title: 'Requisito apagado!' });
+            carregarRequisitosAdmin();
+            carregarCategoriasAdmin();
+        } catch (e) {
+            Swal.fire('Erro', e.message, 'error');
+        }
+    }
+}
+
+// --- GESTÃO AVANÇADA DE ACAMPAMENTO (ADMIN) ---
+window.carregarGestaoCampamento = async () => {
+    const div = document.getElementById('lista-gestao-camp');
+    const filtroUnidade = document.getElementById('adm-filtro-unidade').value;
+
+    div.innerHTML = "<p style='text-align:center;'>🔄 Carregando Raio-X...</p>";
+
+    try {
+        if (filtroUnidade === "TODAS") {
+            // MODO FILA GERAL: Mostra só os pendentes do clube inteiro para aprovação rápida
+            const snap = await getDocs(query(collection(db, "requisitos_campamento"), where("status", "==", "Pendente")));
+            if (snap.empty) {
+                div.innerHTML = "<div style='text-align:center; padding: 20px; background: #e8f5e9; border-radius: 8px;'><h3 style='color:#2e7d32; margin:0;'>✅ Tudo Limpo!</h3><p style='color:#666;'>Nenhum requisito aguardando aprovação no clube.</p></div>";
+                return;
+            }
+            let html = "<h5 style='color:#E65100;'>⏳ Aguardando sua Aprovação</h5>";
+            snap.forEach(dSnap => {
+                const d = dSnap.data();
+                html += `
+                <div class="card" style="border-left: 5px solid #FF9800; margin-bottom: 10px; padding: 15px;">
+                    <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #888;"><b>🛡️ ${d.unidade}</b></p>
+                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #333;">${d.titulo} (${d.pontos || 0} pts)</p>
+                    <div style="background:#f5f5f5; padding:8px; border-radius:5px; font-size:0.85rem; margin-bottom: 10px;">${d.relato}</div>
+                    <img src="${d.foto}" class="acamp-foto-miniatura" onclick="expandirFoto('${d.foto}')" style="max-height: 80px; border-radius: 4px; cursor: pointer;">
+                    <div style="margin-top: 10px; display: flex; gap: 8px;">
+                        <button onclick="alterarStatusEnvio('${dSnap.id}', 'Aprovado')" class="btn btn-primary" style="background: #2E7D32; padding: 5px 10px; font-size: 0.8rem; margin:0; width:auto;">✅ Aprovar</button>
+                        <button onclick="excluirEnvioCamp('${dSnap.id}')" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.8rem; margin:0; width:auto;">🗑️ Excluir Foto</button>
+                    </div>
+                </div>`;
+            });
+            div.innerHTML = html;
+
+        } else {
+            // MODO RAIO-X DA UNIDADE: Mostra TUDO (Falta Fazer, Pendente e Aprovado)
+            const snapCadastrados = await getDocs(query(collection(db, "requisitos_cadastrados"), orderBy("categoria")));
+            const snapEnvios = await getDocs(query(collection(db, "requisitos_campamento"), where("unidade", "==", filtroUnidade)));
+
+            let envios = {};
+            let ptsAprovados = 0; let ptsPendentes = 0;
+
+            snapEnvios.forEach(d => {
+                const dt = d.data();
+                envios[dt.titulo] = { id: d.id, ...dt };
+                if (dt.status === "Aprovado") ptsAprovados += (dt.pontos || 0);
+                if (dt.status === "Pendente") ptsPendentes += (dt.pontos || 0);
+            });
+
+            // Resumo de Pontos da Unidade
+            let html = `
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; border: 1px solid #bbdefb;">
+                <h3 style="margin: 0; color: #1565c0;">📊 Resumo da Unidade</h3>
+                <p style="margin: 5px 0 0 0; font-size: 0.95rem;">✅ Aprovados: <b>${ptsAprovados} pts</b> | ⏳ Pendentes: <b>${ptsPendentes} pts</b></p>
+            </div>`;
+
+            let catAtual = "";
+
+            snapCadastrados.forEach(doc => {
+                const req = doc.data();
+                const envio = envios[req.titulo];
+
+                if (req.categoria !== catAtual) {
+                    catAtual = req.categoria;
+                    html += `<div style="background: #333; color: white; padding: 5px 10px; border-radius: 4px; margin: 20px 0 10px 0; font-weight: bold; font-size: 0.9rem;">📂 ${catAtual}</div>`;
+                }
+
+                if (!envio) {
+                    // O QUE ELES AINDA NÃO FIZERAM
+                    html += `
+                    <div style="border-left: 4px solid #ccc; padding: 10px; margin-bottom: 8px; background: #fafafa; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.9rem; color: #666;"><b>${req.titulo}</b> <small>(${req.pontos} pts)</small></div>
+                        <span style="font-size: 0.75rem; color: #999; background: #eee; padding: 3px 8px; border-radius: 10px; font-weight: bold;">❌ Faltando</span>
+                    </div>`;
+                } else {
+                    // O QUE ELES JÁ ENVIARAM (Mostra tudo: Pendente ou Aprovado)
+                    const isAprovado = envio.status === "Aprovado";
+                    html += `
+                    <div style="border-left: 4px solid ${isAprovado ? '#4CAF50' : '#FF9800'}; padding: 12px; margin-bottom: 10px; background: white; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="font-size: 0.95rem; color: #333;"><b>${req.titulo}</b> <small>(${req.pontos} pts)</small></div>
+                            <span style="font-size: 0.75rem; font-weight: bold; color: white; background: ${isAprovado ? '#4CAF50' : '#FF9800'}; padding: 3px 8px; border-radius: 10px; white-space: nowrap; margin-left: 10px;">
+                                ${isAprovado ? '✅ Aprovado' : '⏳ Pendente'}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #666; background: #f9f9f9; padding: 8px; border-radius: 4px; margin-bottom: 8px; border: 1px dashed #ddd;">
+                            ${envio.relato}
+                        </div>
+                        <img src="${envio.foto}" onclick="expandirFoto('${envio.foto}')" style="height: 60px; border-radius: 4px; cursor: pointer; display: block; margin-bottom: 10px;">
+                        
+                        <div style="display: flex; gap: 8px; border-top: 1px solid #eee; padding-top: 10px;">
+                            ${!isAprovado ?
+                            `<button onclick="alterarStatusEnvio('${envio.id}', 'Aprovado')" class="btn" style="background: #2E7D32; color: white; padding: 6px 12px; font-size: 0.8rem; margin: 0; width: auto;">✅ Aprovar</button>` :
+                            `<button onclick="alterarStatusEnvio('${envio.id}', 'Pendente')" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; margin: 0; width: auto;">🔄 Desfazer Aprovação</button>`
+                        }
+                            <button onclick="excluirEnvioCamp('${envio.id}')" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem; margin: 0; width: auto; background:#c62828;">🗑️ Excluir Envio</button>
+                        </div>
+                    </div>`;
+                }
+            });
+            div.innerHTML = html;
+        }
+    } catch (e) {
+        console.error(e);
+        div.innerHTML = "<p style='color:red; text-align:center;'>Erro ao carregar os dados.</p>";
+    }
+}
+
+// Botões de Ação do Admin
+window.alterarStatusEnvio = async (id, novoStatus) => {
+    const texto = novoStatus === "Aprovado" ? "Tem certeza que deseja APROVAR este requisito?" : "Voltar este requisito para PENDENTE? A unidade perderá os pontos temporariamente.";
+    const confirm = await Swal.fire({ title: 'Atenção', text: texto, icon: 'question', showCancelButton: true, confirmButtonText: 'Sim', cancelButtonText: 'Não' });
+
     if (confirm.isConfirmed) {
-        await updateDoc(doc(db, "requisitos_campamento", id), { status: "Aprovado" });
-        Swal.fire('Aprovado!', 'Pontos creditados para a unidade!', 'success');
-        carregarAprovacaoCampamento();
+        try {
+            await updateDoc(doc(db, "requisitos_campamento", id), { status: novoStatus });
+            registrarLog("Gestão Acamp", `${novoStatus} requisito: ${id}`);
+            Toast.fire({ icon: 'success', title: novoStatus === "Aprovado" ? 'Aprovado!' : 'Voltou para Pendente' });
+            carregarGestaoCampamento(); // Recarrega a lista do Raio-X
+            carregarRequisitosDisponiveis(); // Atualiza painel do conselheiro
+        } catch (e) { Swal.fire('Erro', e.message, 'error'); }
+    }
+}
+
+window.excluirEnvioCamp = async (id) => {
+    const confirm = await Swal.fire({
+        title: 'Excluir Envio?',
+        text: "Isso apagará a foto e o relato. A unidade terá que enviar de novo. (Se estava aprovado, eles perdem os pontos).",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sim, excluir!'
+    });
+
+    if (confirm.isConfirmed) {
+        try {
+            await deleteDoc(doc(db, "requisitos_campamento", id));
+            registrarLog("Exclusão Acamp", `Excluiu envio: ${id}`);
+            Toast.fire({ icon: 'success', title: 'Envio removido!' });
+            carregarGestaoCampamento(); // Recarrega a lista
+            carregarRequisitosDisponiveis();
+        } catch (e) { Swal.fire('Erro', e.message, 'error'); }
     }
 }
 
