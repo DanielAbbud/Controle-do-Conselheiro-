@@ -1,4 +1,3 @@
-// 1. Mudei o nome para v3.0 para forçar a atualização nos celulares
 const CACHE_NAME = "controle-unidade-v2.1";
 
 const urlsToCache = [

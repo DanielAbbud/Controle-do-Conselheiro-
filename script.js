@@ -31,7 +31,12 @@ let nomeAntigoEmEdicao = null;
 
 const nomesCategorias = ["Frequencia", "Devoção Matinal", "Uniforme", "Higiene.", "Classe Biblica", "Ano Bíblico", "Materiais", "Disciplina."];
 const coresGrafico = ['#FF5722', '#FFC107', '#4CAF50', '#03A9F4', '#9C27B0', '#E91E63', '#795548', '#607D8B'];
-const ADMINS = ["R5dbzU8OsJc21IU7cx6gPAMomrA2"];
+
+// LISTA DE ADMINS (UIDs do Firebase)
+const ADMINS = [
+    "R5dbzU8OsJc21IU7cx6gPAMomrA2", // Daniel Quintela
+    "KqLW3du260V0g3x9XBNWvr5bNLf2"  // Sergio Lima
+];
 
 const Toast = Swal.mixin({
     toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true,
