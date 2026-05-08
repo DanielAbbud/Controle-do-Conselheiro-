@@ -35,7 +35,8 @@ const coresGrafico = ['#FF5722', '#FFC107', '#4CAF50', '#03A9F4', '#9C27B0', '#E
 // LISTA DE ADMINS (UIDs do Firebase)
 const ADMINS = [
     "R5dbzU8OsJc21IU7cx6gPAMomrA2", // Daniel Quintela
-    "KqLW3du260V0g3x9XBNWvr5bNLf2"  // Sergio Lima
+    "KqLW3du260VOg3x9XBNWvr5bNLf2",  // Sergio Lima
+    "OCwBHmcrpjWSWjOfIr7Y5cCUBZx1" // Email teste
 ];
 
 const Toast = Swal.mixin({
@@ -116,6 +117,8 @@ onAuthStateChanged(auth, async (user) => {
             document.getElementById('nav-admin').style.display = ADMINS.includes(user.uid) ? "inline-block" : "none";
             carregarConfiguracao(); configurarPeriodoAtual();
         }
+
+        Swal.fire('Debug UID', 'O seu UID é: ' + user.uid, 'info');
     } else {
         userAtual = null; document.getElementById('tela-login').classList.remove('hidden'); document.getElementById('app-principal').classList.add('hidden');
         document.getElementById('app-principal').style.display = 'none'; document.getElementById('btn-logout').classList.add('hidden'); document.getElementById('modal-setup-inicial').classList.add('hidden');
