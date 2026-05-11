@@ -6,39 +6,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Termos de Uso - Heróis da Fé</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body style="background: #f4f7f6;">
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
 
-    <div class="container" style="margin-top: 40px;">
-        <div class="card">
-            <h2 style="color: #E65100; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
-                📜 Termos de Uso
+    <header>
+        <div class="header-content">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="logo.png" alt="Brasão Heróis da Fé" class="logo-header">
+                <div>
+                    <h1 style="margin: 0;">Clube Heróis da Fé</h1>
+                    <small style="display: block; opacity: 0.9;">Documentos Oficiais</small>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="flex: 1; padding-top: 20px; max-width: 800px; margin: 0 auto;">
+        <div class="card" style="padding: 30px;">
+            <h2 style="color: #E65100; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-file-contract"></i> Termos de Uso
             </h2>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
 
-            <p>Ao acessar o sistema <strong>Controle de Unidade - Heróis da Fé</strong>, você concorda em cumprir estes
-                termos de serviço, todas as leis e regulamentos aplicáveis.</p>
 
-            <h4 style="margin-top: 20px; color: #333;">1. Uso do Sistema</h4>
-            <p>Este sistema é destinado exclusivamente para Desbravadores:</p>
-            <ul style="margin-left: 20px; margin-top: 10px;">
-                <li>Gerenciamento de pontuação das unidades.</li>
-                <li>Cadastro de membros e consulta de dados de contato.</li>
-                <li>Acompanhamento de desempenho do clube.</li>
-            </ul>
+            <p style="color: #444; line-height: 1.6;">Ao acessar e utilizar o aplicativo <strong>Controle de Unidade -
+                    Heróis da Fé</strong>, você concorda em cumprir estes termos de serviço, todas as leis e
+                regulamentos aplicáveis.</p>
 
-            <h4 style="margin-top: 20px; color: #333;">2. Responsabilidades do Usuário</h4>
-            <p>O Conselheiro/Diretor compromete-se a:</p>
-            <ul style="margin-left: 20px; margin-top: 10px;">
-                <li>Não compartilhar sua senha de acesso com terceiros.</li>
-                <li>Manter os dados dos desbravadores atualizados e verdadeiros.</li>
-                <li>Não utilizar as informações de contato para fins fora das atividades do clube.</li>
-            </ul>
+            <h4 style="margin-top: 20px; color: #333;">1. Uso da Licença</h4>
+            <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">É concedida permissão para usar
+                temporariamente este sistema, com fins exclusivos de gestão e avaliação de unidades do Clube de
+                Desbravadores Heróis da Fé. Esta é a concessão de uma licença, não uma transferência de título.</p>
 
-            <br>
-            <button onclick="window.close()" class="btn btn-primary" style="width: auto;">Fechar Página</button>
+            <h4 style="margin-top: 20px; color: #333;">2. Compromisso do Usuário</h4>
+            <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">O usuário (Conselheiro, Associado ou Diretor)
+                compromete-se a usar o sistema de forma íntegra, preenchendo as pontuações e dados dos desbravadores de
+                forma verdadeira e honesta, preservando o sigilo dos dados cadastrados de acordo com nossa Política de
+                Privacidade.</p>
+
+            <h4 style="margin-top: 20px; color: #333;">3. Modificações</h4>
+            <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">A direção do Clube Heróis da Fé pode revisar
+                estes termos de serviço e/ou atualizar o sistema a qualquer momento, sem aviso prévio. Ao continuar a
+                usar o sistema, você concorda em ficar vinculado à versão atual desses termos e recursos.</p>
+
+            <button onclick="window.close()" class="btn btn-primary"
+                style="margin-top: 30px; width: auto; padding: 12px 25px;">
+                Fechar Página
+            </button>
         </div>
     </div>
+
+    <footer style="margin-top: auto;">
+        <div class="footer-links">
+            <a href="politica.html">Política de Privacidade</a>
+            <span style="opacity: 0.5;">•</span>
+            <a href="termos.html">Termos de Uso</a>
+        </div>
+        <p style="margin: 10px 0; font-size: 0.85rem; opacity: 0.9;">
+            © 2026 Clube Heróis da Fé. Todos os direitos reservados.
+        </p>
+        <p class="credits">
+            Desenvolvido com <i class="fa-solid fa-heart" style="color: #fff;"></i> por <strong>Daniel Quintela</strong>
+        </p>
+    </footer>
 
 </body>
 
