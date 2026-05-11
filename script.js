@@ -948,3 +948,39 @@ window.dispararConfetes = () => {
         }, 250);
     }
 }
+
+// --- CONTAGEM REGRESSIVA PARA O ACAMPAMENTO ---
+function iniciarContagemRegressiva() {
+    // Data alvo baseada no GOG: 12 de Junho de 2026 às 13:00
+    const targetDate = new Date("June 12, 2026 13:00:00").getTime();
+
+    setInterval(() => {
+        const now = new Date().getTime();
+        const distance = targetDate - now;
+
+        const elDias = document.getElementById("cd-dias");
+        if (!elDias) return; // Se o elemento não existir na tela, não faz nada
+
+        if (distance < 0) {
+            elDias.innerText = "00";
+            document.getElementById("cd-horas").innerText = "00";
+            document.getElementById("cd-min").innerText = "00";
+            document.getElementById("cd-seg").innerText = "00";
+            document.querySelector('.countdown-title').innerText = "🎉 O ACAMPAMENTO COMEÇOU! 🎉";
+            return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        elDias.innerText = days < 10 ? "0" + days : days;
+        document.getElementById("cd-horas").innerText = hours < 10 ? "0" + hours : hours;
+        document.getElementById("cd-min").innerText = minutes < 10 ? "0" + minutes : minutes;
+        document.getElementById("cd-seg").innerText = seconds < 10 ? "0" + seconds : seconds;
+    }, 1000);
+}
+
+// Inicia o relógio assim que o script carregar
+iniciarContagemRegressiva();

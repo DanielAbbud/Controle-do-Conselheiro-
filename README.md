@@ -1,8 +1,8 @@
-# 🛡️ Sistema de Controle de Unidade - Clube Heróis da Fé (V2.0)
+# 🛡️ Sistema de Controle de Unidade - Clube Heróis da Fé (V3.0)
 
 Sistema web e **PWA (Progressive Web App)** desenvolvido para gestão e avaliação semanal das unidades de Desbravadores. O foco é eliminar o papel, automatizar a somatória de pontos e garantir segurança total e auditoria para a liderança.
 
-> **Versão Atual:** 2.0 (Blindada & Otimizada)
+> **Versão Atual:** 3.0 (Módulo Acampamento & Multi-Admin)
 
 ## 🚀 Funcionalidades Principais
 
@@ -14,6 +14,7 @@ Sistema web e **PWA (Progressive Web App)** desenvolvido para gestão e avaliaç
 
 ### 2. 🔐 Autenticação e Segurança (Blindada)
 * **Vínculo Obrigatório:** O sistema obriga a seleção da Unidade no momento do cadastro.
+* **Multi-Admin:** Suporte para múltiplos diretores com acesso total ao painel de controle.
 * **Modal Google Inteligente:** Se o usuário entrar com Google pela primeira vez, uma janela bloqueia o acesso até que ele selecione sua unidade.
 * **Trava de Segurança:** Após definida, a Unidade não pode ser alterada manualmente pelo Conselheiro, evitando erros ou trocas acidentais.
 * **Login Seguro:** Acesso via E-mail/Senha ou Conta Google com persistência de sessão.
@@ -36,12 +37,19 @@ Sistema web e **PWA (Progressive Web App)** desenvolvido para gestão e avaliaç
 * **Edição Fácil:** Altere dados da ficha ou exclua membros (com confirmação de segurança).
 
 ### 6. 👮 Painel Administrativo (Diretoria)
+* **Gestão de Acampamento (Raio-X):** Filtro avançado para visualizar os envios de requisitos por unidade, permitindo aprovar, rejeitar ou excluir fotos persistentes.
 * **Logs de Auditoria Turbinados:**
     * Registra: *Quem fez* + *Email de contato* + *Qual Unidade pertence*.
     * Exemplo: `Daniel (email@gmail.com) | Und: THIAGO WHITE`.
 * **Correção de "Delay":** Sistema aguarda o carregamento dos dados para garantir que nenhum log fique "Sem Unidade".
 * **Espião de Dispositivo:** Identifica se o acesso foi via Celular (Android/iPhone) ou PC.
 * **Gestão Global:** O Admin pode visualizar e gerenciar as fichas de todas as unidades.
+
+### 7. 🏕️ Módulo de Acampamento (XXIII MiniCamping)
+* **Contagem Regressiva:** Relógio dinâmico marcando os dias, horas, minutos e segundos para o início do acampamento.
+* **Download do GOG:** Acesso direto ao Guia de Orientações Gerais (PDF) pelo painel do conselheiro.
+* **Gamificação Máxima:** Barra de progresso automática e sistema de classificação por estrelas (3, 4 ou 5 estrelas) baseado na meta de 10.000 pontos.
+* **Efeitos Visuais:** Animação de "chuva de confetes" disparada ao atingir o nível máximo de excelência (80% a 100%).
 
 ---
 
@@ -52,6 +60,7 @@ Sistema web e **PWA (Progressive Web App)** desenvolvido para gestão e avaliaç
 * **Firebase Authentication:** Gestão de usuários.
 * **Firebase Firestore:** Banco de dados NoSQL em tempo real.
 * **SweetAlert2:** Alertas e modais bonitos e interativos.
+* **Canvas Confetti:** Biblioteca para efeitos visuais de comemoração de metas.
 
 ---
 
@@ -72,7 +81,8 @@ O sistema utiliza tecnologia PWA. Siga os passos abaixo:
 
 ## 📸 Status do Projeto
 
-✅ **Versão 2.0 Finalizada.**
-* Sistema de Logs corrigido.
-* Botão de Ranking Anual com gatilho de data (Dezembro).
-* Cadastro e Login blindados contra erros de unidade.
+✅ **Versão 3.0 Finalizada.**
+* Módulo de Acampamento (XXIII MiniCamping) integrado com gamificação e contagem regressiva.
+* Painel Administrativo expandido com ferramenta de Raio-X por Unidades.
+* Suporte a múltiplos Administradores (Diretoria).
+* Link direto para download do GOG e chuva de confetes adicionada.
