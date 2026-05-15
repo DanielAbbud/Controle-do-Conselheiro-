@@ -686,25 +686,42 @@ window.abrirModalEnvio = (titulo, pontos) => {
 window.confirmarEnvioRequisito = async () => {
     const dadosReq = JSON.parse(document.getElementById('modal-req-nome').value);
     const relato = document.getElementById('modal-req-relato').value;
-    const file = document.getElementById('modal-req-foto').files[0];
+    const inputFotos = document.getElementById('modal-req-foto');
+    const files = inputFotos.files; // Agora pega em todos os ficheiros!
 
-    if (!relato || !file) return Swal.fire('Erro', 'Preencha relato e foto!', 'warning');
-    Swal.fire({ title: 'Processando...', didOpen: () => Swal.showLoading() });
+    if (!relato || files.length === 0) {
+        return Swal.fire('Erro', 'Preencha o relato e escolha pelo menos uma foto!', 'warning');
+    }
+
+    Swal.fire({ title: 'A processar...', didOpen: () => Swal.showLoading() });
+
     try {
-        const fotoTexto = await comprimirImagem(file);
+        let fotosComprimidas = [];
+
+        // Loop mágico: Comprime todas as fotos selecionadas uma a uma
+        for (let i = 0; i < files.length; i++) {
+            const fotoTexto = await comprimirImagem(files[i]);
+            fotosComprimidas.push(fotoTexto);
+        }
+
+        // Grava no banco de dados (agora o campo chama-se 'fotos' no plural)
         await addDoc(collection(db, "requisitos_campamento"), {
             unidade: dadosUnidade.unidade,
             titulo: dadosReq.titulo,
             pontos: dadosReq.pontos,
-            relato,
-            foto: fotoTexto,
+            relato: relato,
+            fotos: fotosComprimidas, // Guarda a lista de fotos comprimidas!
             status: "Pendente",
             data: new Date().toISOString()
         });
-        Swal.fire('Enviado!', '', 'success');
+
+        Swal.fire('Enviado!', 'O comprovativo foi enviado com sucesso.', 'success');
         document.getElementById('modal-envio-req').classList.add('hidden');
         carregarRequisitosDisponiveis();
-    } catch (e) { Swal.fire('Erro', e.message, 'error'); }
+
+    } catch (e) {
+        Swal.fire('Erro', e.message, 'error');
+    }
 }
 
 // --- GESTÃO DOS REQUISITOS CADASTRADOS (ADMIN) ---
