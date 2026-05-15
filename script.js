@@ -519,14 +519,42 @@ function configurarPeriodoAtual() {
 }
 
 function comprimirImagem(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader(); reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image(); img.src = e.target.result;
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        // Se der erro ao tentar ler o arquivo do celular, ele não trava, ele avisa!
+        reader.onerror = () => reject(new Error("Falha ao ler o arquivo do celular."));
+
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+
+            // Se a imagem for um formato maluco (como HEIC com erro), ele avisa em vez de travar
+            img.onerror = () => reject(new Error("Formato de imagem não suportado."));
+
+            img.src = event.target.result;
             img.onload = () => {
-                const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const max = 800;
-                if (width > height) { if (width > max) { height *= max / width; width = max; } } else { if (height > max) { width *= max / height; height = max; } }
-                canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/jpeg', 0.6));
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const max = 800;
+
+                // Mantém a proporção da imagem para não achatar
+                if (width > height) {
+                    if (width > max) { height *= max / width; width = max; }
+                } else {
+                    if (height > max) { width *= max / height; height = max; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // O Pulo do Gato: Força a ser JPEG e reduz a qualidade para 50% (0.5)
+                const fotoSuperComprimida = canvas.toDataURL('image/jpeg', 0.5);
+
+                resolve(fotoSuperComprimida);
             };
         };
     });
@@ -802,17 +830,35 @@ window.carregarGestaoCampamento = async () => {
             let html = "<h5 style='color:#E65100;'>⏳ Aguardando sua Aprovação</h5>";
             snap.forEach(dSnap => {
                 const d = dSnap.data();
+
+                // --- NOVA LÓGICA DE GALERIA DE FOTOS ---
+                let htmlFotos = '';
+                if (d.fotos && Array.isArray(d.fotos)) {
+                    // Se for o formato NOVO (lista de fotos)
+                    htmlFotos = d.fotos.map(url => `
+                    <img src="${url}" class="acamp-foto-miniatura" onclick="expandirFoto('${url}')" style="max-height: 80px; border-radius: 5px; cursor: pointer; object-fit: cover;">
+                `).join('');
+                } else if (d.foto) {
+                    // Se for o formato ANTIGO (uma foto só)
+                    htmlFotos = `<img src="${d.foto}" class="acamp-foto-miniatura" onclick="expandirFoto('${d.foto}')" style="max-height: 80px; border-radius: 5px; cursor: pointer;">`;
+                }
+                // ---------------------------------------
+
                 html += `
-                <div class="card" style="border-left: 5px solid #FF9800; margin-bottom: 10px; padding: 15px;">
-                    <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #888;"><b>🛡️ ${d.unidade}</b></p>
-                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #333;">${d.titulo} (${d.pontos || 0} pts)</p>
-                    <div style="background:#f5f5f5; padding:8px; border-radius:5px; font-size:0.85rem; margin-bottom: 10px;">${d.relato}</div>
-                    <img src="${d.foto}" class="acamp-foto-miniatura" onclick="expandirFoto('${d.foto}')" style="max-height: 80px; border-radius: 4px; cursor: pointer;">
-                    <div style="margin-top: 10px; display: flex; gap: 8px;">
-                        <button onclick="alterarStatusEnvio('${dSnap.id}', 'Aprovado')" class="btn btn-primary" style="background: #2E7D32; padding: 5px 10px; font-size: 0.8rem; margin:0; width:auto;">✅ Aprovar</button>
-                        <button onclick="excluirEnvioCamp('${dSnap.id}')" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.8rem; margin:0; width:auto;">🗑️ Excluir Foto</button>
-                    </div>
-                </div>`;
+            <div class="card" style="border-left: 5px solid #FF9800; margin-bottom: 10px; padding: 15px;">
+                <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #888;"><b>🛡️ ${d.unidade}</b></p>
+                <p style="margin: 0; font-weight: bold; color: #333;">${d.titulo} (${d.pontos || 0} pts)</p>
+                <div style="background:#f5f5f5; padding:8px; border-radius:5px; font-size:0.85rem; margin-bottom: 10px;">${d.relato}</div>
+                
+                <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;">
+                    ${htmlFotos}
+                </div>
+                
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <button onclick="alterarStatusEnvio('${dSnap.id}', 'Aprovado')" class="btn btn-primary" style="background: #28a745; border-color: #28a745; padding: 5px 10px; font-size: 0.85rem;">✅ Aprovar</button>
+                    <button onclick="excluirEnvioCamp('${dSnap.id}')" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85rem;">🗑️ Excluir</button>
+                </div>
+            </div>`;
             });
             div.innerHTML = html;
 
@@ -859,27 +905,46 @@ window.carregarGestaoCampamento = async () => {
                 } else {
                     // O QUE ELES JÁ ENVIARAM (Mostra tudo: Pendente ou Aprovado)
                     const isAprovado = envio.status === "Aprovado";
+
+                    // --- NOVA LÓGICA DE GALERIA DE FOTOS (RAIO-X) ---
+                    let htmlFotos = '';
+                    if (envio.fotos && Array.isArray(envio.fotos)) {
+                        // Formato NOVO (Lista de fotos)
+                        htmlFotos = envio.fotos.map(url => `
+                <img src="${url}" onclick="expandirFoto('${url}')" style="height: 60px; border-radius: 4px; cursor: pointer; object-fit: cover;">
+            `).join('');
+                    } else if (envio.foto) {
+                        // Formato ANTIGO (Uma foto só)
+                        htmlFotos = `<img src="${envio.foto}" onclick="expandirFoto('${envio.foto}')" style="height: 60px; border-radius: 4px; cursor: pointer;">`;
+                    }
+                    // ------------------------------------------------
+
                     html += `
-                    <div style="border-left: 4px solid ${isAprovado ? '#4CAF50' : '#FF9800'}; padding: 12px; margin-bottom: 10px; background: white; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <div style="font-size: 0.95rem; color: #333;"><b>${req.titulo}</b> <small>(${req.pontos} pts)</small></div>
-                            <span style="font-size: 0.75rem; font-weight: bold; color: white; background: ${isAprovado ? '#4CAF50' : '#FF9800'}; padding: 3px 8px; border-radius: 10px; white-space: nowrap; margin-left: 10px;">
-                                ${isAprovado ? '✅ Aprovado' : '⏳ Pendente'}
-                            </span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #666; background: #f9f9f9; padding: 8px; border-radius: 4px; margin-bottom: 8px; border: 1px dashed #ddd;">
-                            ${envio.relato}
-                        </div>
-                        <img src="${envio.foto}" onclick="expandirFoto('${envio.foto}')" style="height: 60px; border-radius: 4px; cursor: pointer; display: block; margin-bottom: 10px;">
-                        
-                        <div style="display: flex; gap: 8px; border-top: 1px solid #eee; padding-top: 10px;">
-                            ${!isAprovado ?
-                            `<button onclick="alterarStatusEnvio('${envio.id}', 'Aprovado')" class="btn" style="background: #2E7D32; color: white; padding: 6px 12px; font-size: 0.8rem; margin: 0; width: auto;">✅ Aprovar</button>` :
-                            `<button onclick="alterarStatusEnvio('${envio.id}', 'Pendente')" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; margin: 0; width: auto;">🔄 Desfazer Aprovação</button>`
-                        }
-                            <button onclick="excluirEnvioCamp('${envio.id}')" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem; margin: 0; width: auto; background:#c62828;">🗑️ Excluir Envio</button>
-                        </div>
-                    </div>`;
+        <div style="border-left: 4px solid ${isAprovado ? '#4CAF50' : '#FF9800'}; padding: 12px; margin-bottom: 10px; background: white; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div style="font-size: 0.95rem; color: #333;"><b>${req.titulo}</b> <small>(${req.pontos} pts)</small></div>
+                <span style="font-size: 0.75rem; font-weight: bold; color: white; background: ${isAprovado ? '#4CAF50' : '#FF9800'}; padding: 3px 8px; border-radius: 10px;">
+                    ${isAprovado ? '✅ Aprovado' : '⏳ Pendente'}
+                </span>
+            </div>
+            
+            <div style="font-size: 0.85rem; color: #666; background: #f9f9f9; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
+                ${envio.relato}
+            </div>
+            
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;">
+                ${htmlFotos}
+            </div>
+            
+            <div style="display: flex; gap: 8px; border-top: 1px solid #eee; padding-top: 10px; margin-top: 8px;">
+                ${!isAprovado ? `
+                    <button onclick="alterarStatusEnvio('${envio.id}', 'Aprovado')" class="btn" style="background: #2E7D32; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;">✅ Aprovar</button>
+                ` : `
+                    <button onclick="alterarStatusEnvio('${envio.id}', 'Pendente')" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;">Desfazer Aprovação</button>
+                `}
+                <button onclick="excluirEnvioCamp('${envio.id}')" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;">🗑️ Excluir</button>
+            </div>
+        </div>`;
                 }
             });
             div.innerHTML = html;
