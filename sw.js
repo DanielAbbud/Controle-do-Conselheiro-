@@ -1,4 +1,5 @@
-const CACHE_NAME = "controle-unidade-v3.8";
+const CACHE_NAME = "controle-unidade-v3.9";
+const CACHE_PREFIX = "controle-unidade-";
 
 const urlsToCache = [
     "./",
@@ -6,58 +7,190 @@ const urlsToCache = [
     "./style.css",
     "./script.js",
     "./logo.png",
+
     "./logo-thiago-white.png",
     "./logo-ellen-white.png",
     "./logo-joseph-bates.png",
     "./logo-rainha-ester.png",
+
     "./manifest.json",
     "./politica.html",
     "./termos.html",
     "./redefinir.html"
 ];
 
-// 2. INSTALAÇÃO: Agora ele baixa os arquivos mas FICA ESPERANDO (Waiting)
+
+// INSTALA A NOVA VERSÃO
 self.addEventListener("install", (event) => {
-    // REMOVI O self.skipWaiting() DAQUI PARA O BOTÃO FUNCIONAR
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log("Baixando nova versão v3.8...");
-            return cache.addAll(urlsToCache);
-        })
-    );
+
+    event.waitUntil((async () => {
+
+        const cache =
+            await caches.open(CACHE_NAME);
+
+        await Promise.all(
+            urlsToCache.map(async (url) => {
+
+                const request =
+                    new Request(
+                        url,
+                        {
+                            cache: "reload"
+                        }
+                    );
+
+                const response =
+                    await fetch(request);
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Erro ao atualizar ${url}`
+                    );
+
+                }
+
+                await cache.put(
+                    url,
+                    response
+                );
+
+            })
+        );
+
+    })());
+
 });
 
-// 3. MENSAGEM: É aqui que a mágica do botão acontece
-// Quando o usuário clica em "Atualizar" no site, ele manda essa mensagem pra cá
-self.addEventListener('message', (event) => {
-    if (event.data.action === 'skipWaiting') {
-        self.skipWaiting(); // AGORA SIM ele atualiza!
+
+// RECEBE O CLIQUE EM "ATUALIZAR"
+self.addEventListener(
+    "message",
+    (event) => {
+
+        if (
+            event.data &&
+            event.data.action ===
+            "skipWaiting"
+        ) {
+
+            self.skipWaiting();
+
+        }
+
     }
-});
+);
 
-// 4. ATIVAÇÃO: Limpa os caches antigos (v2, v1...)
-self.addEventListener("activate", (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cache) => {
-                    if (cache !== CACHE_NAME) {
-                        console.log("Limpando cache antigo:", cache);
-                        return caches.delete(cache);
-                    }
-                })
+
+// LIMPA CACHE ANTIGO
+self.addEventListener(
+    "activate",
+    (event) => {
+
+        event.waitUntil((async () => {
+
+            const cachesExistentes =
+                await caches.keys();
+
+            await Promise.all(
+
+                cachesExistentes
+                    .filter(
+                        (nome) =>
+                            nome.startsWith(
+                                CACHE_PREFIX
+                            ) &&
+                            nome !== CACHE_NAME
+                    )
+                    .map(
+                        (nome) =>
+                            caches.delete(nome)
+                    )
+
             );
-        }).then(() => {
-            return self.clients.claim(); // Assume o controle da página
-        })
-    );
-});
 
-// 5. FETCH: Mantém o site funcionando offline
-self.addEventListener("fetch", (event) => {
-    event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
-        })
-    );
-});
+            await self.clients.claim();
+
+        })());
+
+    }
+);
+
+
+// CONTROLE DO CACHE
+self.addEventListener(
+    "fetch",
+    (event) => {
+
+        if (
+            event.request.method !== "GET"
+        ) return;
+
+        const url =
+            new URL(
+                event.request.url
+            );
+
+        if (
+            url.origin !==
+            self.location.origin
+        ) return;
+
+
+        // HTML SEMPRE TENTA INTERNET PRIMEIRO
+        if (
+            event.request.mode ===
+            "navigate"
+        ) {
+
+            event.respondWith((async () => {
+
+                try {
+
+                    const response =
+                        await fetch(
+                            event.request,
+                            {
+                                cache:
+                                    "no-store"
+                            }
+                        );
+
+                    return response;
+
+                } catch (erro) {
+
+                    return (
+                        await caches.match(
+                            "./index.html"
+                        )
+                    );
+
+                }
+
+            })());
+
+            return;
+        }
+
+
+        // DEMAIS ARQUIVOS
+        event.respondWith((async () => {
+
+            const cached =
+                await caches.match(
+                    event.request
+                );
+
+            if (cached) {
+                return cached;
+            }
+
+            return fetch(
+                event.request
+            );
+
+        })());
+
+    }
+);

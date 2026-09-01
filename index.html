@@ -170,7 +170,8 @@
                 <button id="btn-adm-fichas" onclick="alternarVisaoAdmin('fichas')" class="btn btn-secondary"
                     style="font-size: 0.9rem;">📂 Fichas Cadastrais</button>
                 <button id="btn-adm-pdf-global" onclick="exportarTodasUnidadesPDF()" class="btn btn-primary"
-                    style="font-size: 0.9rem; background:#c62828; border-color:#c62828;">📄 PDF Todas as Unidades</button>
+                    style="font-size: 0.9rem; background:#c62828; border-color:#c62828;">📄 PDF Todas as
+                    Unidades</button>
             </div>
 
             <div id="admin-view-logs" class="hidden">
@@ -331,7 +332,8 @@
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
                     <h3 style="margin:0;">Pontuações da Unidade</h3>
-                    <button id="btn-exportar-historico-geral-pdf" onclick="exportarHistoricoGeralPDF()" class="btn btn-primary"
+                    <button id="btn-exportar-historico-geral-pdf" onclick="exportarHistoricoGeralPDF()"
+                        class="btn btn-primary"
                         style="width:auto; padding:9px 14px; background:#C62828; border-color:#C62828;">
                         <i class="fa-solid fa-file-pdf"></i> Exportar histórico completo PDF
                     </button>
@@ -428,21 +430,41 @@
 
 
     </div>
-    <div id="update-toast" class="hidden"
-        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div id="update-toast" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.85); z-index: 99999;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; backdrop-filter: blur(5px);">
 
-        <div
-            style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 90%; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-            <i class="fa-solid fa-cloud-arrow-down" style="font-size: 3.5rem; color: #E65100; margin-bottom: 15px;"></i>
-            <h2 style="color: #E65100; margin-top: 0; margin-bottom: 10px; font-size: 1.5rem;">Atualização Necessária
+        <div style="
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 90%;
+            width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        ">
+            <h2 style="color:#E65100;">
+                Nova atualização disponível
             </h2>
-            <p style="color: #555; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5;">
-                O Controle de Unidade tem novas funções ou correções!<br><br>Para continuar usando o sistema, é
-                obrigatório
-                aplicar a atualização.
+
+            <p style="color:#555; line-height:1.5;">
+                Há uma nova versão do Controle de Unidade.
+                <br><br>
+                Toque em <strong>Atualizar agora</strong>.
+                O aplicativo vai instalar a nova versão automaticamente.
             </p>
-            <button id="reload-btn"
-                style="background: #E65100; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; width: 100%; box-shadow: 0 4px 10px rgba(230, 81, 0, 0.3);">
+
+            <button id="reload-btn" style="
+                    background:#E65100;
+                    color:white;
+                    border:none;
+                    padding:15px;
+                    border-radius:8px;
+                    font-weight:bold;
+                    font-size:1.1rem;
+                    width:100%;
+                ">
                 🔄 ATUALIZAR AGORA
             </button>
         </div>
@@ -467,43 +489,201 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script type="module" src="script.js"></script>
 
-    <script>
-        let newWorker;
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
+    </script>
+    let newWorker = null;
+    let swRegistration = null;
+    let refreshing = false;
 
-                    // --- NOVIDADE: Checa atualizações a cada 1 minuto silenciosamente ---
-                    setInterval(() => {
-                        reg.update();
-                    }, 60000);
-                    // --------------------------------------------------------------------
+    function mostrarAtualizacaoDisponivel(worker) {
+    if (worker) newWorker = worker;
 
-                    reg.addEventListener('updatefound', () => {
-                        newWorker = reg.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                let toast = document.getElementById('update-toast');
-                                toast.classList.remove('hidden');
-                                toast.style.display = 'flex';
-                            }
-                        });
-                    });
-                });
-            });
-        }
+    const toast = document.getElementById('update-toast');
 
-        document.getElementById('reload-btn').addEventListener('click', () => {
-            if (newWorker) newWorker.postMessage({ action: 'skipWaiting' });
-            window.location.reload();
-        });
+    if (!toast) return;
 
-        let refreshing;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return;
-            window.location.reload();
-            refreshing = true;
-        });
+    toast.classList.remove('hidden');
+    toast.style.display = 'flex';
+    }
+
+    if ('serviceWorker' in navigator) {
+
+    window.addEventListener('load', async () => {
+
+    try {
+
+    swRegistration = await navigator.serviceWorker.register(
+    './sw.js',
+    {
+    updateViaCache: 'none'
+    }
+    );
+
+    // Caso a atualização já esteja aguardando
+    if (
+    swRegistration.waiting &&
+    navigator.serviceWorker.controller
+    ) {
+    mostrarAtualizacaoDisponivel(
+    swRegistration.waiting
+    );
+    }
+
+    // Detecta nova versão
+    swRegistration.addEventListener(
+    'updatefound',
+    () => {
+
+    const workerInstalando =
+    swRegistration.installing;
+
+    if (!workerInstalando) return;
+
+    newWorker = workerInstalando;
+
+    workerInstalando.addEventListener(
+    'statechange',
+    () => {
+
+    if (
+    workerInstalando.state ===
+    'installed' &&
+    navigator.serviceWorker.controller
+    ) {
+    mostrarAtualizacaoDisponivel(
+    workerInstalando
+    );
+    }
+
+    }
+    );
+
+    }
+    );
+
+    // Quando o usuário volta para o PWA
+    document.addEventListener(
+    'visibilitychange',
+    () => {
+
+    if (
+    document.visibilityState ===
+    'visible'
+    ) {
+    swRegistration
+    .update()
+    .catch(() => { });
+    }
+
+    }
+    );
+
+    // Verifica atualização a cada 1 minuto
+    setInterval(() => {
+
+    swRegistration
+    .update()
+    .catch(() => { });
+
+    }, 60000);
+
+    } catch (erro) {
+
+    console.error(
+    'Erro ao verificar atualização:',
+    erro
+    );
+
+    }
+
+    });
+
+
+    // Quando a nova versão assume o controle
+    navigator.serviceWorker.addEventListener(
+    'controllerchange',
+    () => {
+
+    if (refreshing) return;
+
+    refreshing = true;
+
+    window.location.reload();
+
+    }
+    );
+    }
+
+
+    document
+    .getElementById('reload-btn')
+    .addEventListener(
+    'click',
+    async () => {
+
+    const botao =
+    document.getElementById(
+    'reload-btn'
+    );
+
+    botao.disabled = true;
+
+    botao.textContent =
+    '⏳ ATUALIZANDO...';
+
+    try {
+
+    const worker =
+    (
+    swRegistration &&
+    swRegistration.waiting
+    ) ||
+    newWorker;
+
+    if (worker) {
+
+    worker.postMessage({
+    action: 'skipWaiting'
+    });
+
+    return;
+    }
+
+    if (swRegistration) {
+
+    await swRegistration.update();
+
+    const aguardando =
+    swRegistration.waiting ||
+    swRegistration.installing;
+
+    if (aguardando) {
+
+    aguardando.postMessage({
+    action: 'skipWaiting'
+    });
+
+    return;
+    }
+    }
+
+    window.location.reload();
+
+    } catch (erro) {
+
+    console.error(
+    'Erro na atualização:',
+    erro
+    );
+
+    botao.disabled = false;
+
+    botao.textContent =
+    '🔄 TENTAR NOVAMENTE';
+
+    }
+
+    }
+    );
     </script>
 
 </body>
